@@ -1,155 +1,60 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>تبدیل Lottie به AnimatedVectorDrawable</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js"></script>
-<style>
-:root{
-  --bg:#E9EDF1; --surface:#FFFFFF; --surface-2:#F3F5F8; --ink:#15202B; --muted:#5A6775; --line:#D3DAE1;
-  --accent:#1B7F5A; --accent-ink:#FFFFFF; --lottie:#5B46E8; --avd:#1B7F5A;
-  --warn:#9A4A06; --warn-bg:#FDF1E1; --err:#B42318; --err-bg:#FDECEA;
-  --check-a:#FFFFFF; --check-b:#EEF1F4; --code-bg:#F3F5F8;
-  --font:"Vazirmatn", Tahoma, "Segoe UI", system-ui, sans-serif;
-  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0E1216; --surface:#161B21; --surface-2:#1D242B; --ink:#E5EAF0; --muted:#95A2AF; --line:#2A333C;
-    --accent:#3CC48E; --accent-ink:#04130C; --lottie:#9D8CFF; --avd:#3CC48E;
-    --warn:#F2B35B; --warn-bg:#2A2114; --err:#FF8A80; --err-bg:#2C1515;
-    --check-a:#1B2128; --check-b:#222A32; --code-bg:#11161B;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0E1216; --surface:#161B21; --surface-2:#1D242B; --ink:#E5EAF0; --muted:#95A2AF; --line:#2A333C;
-  --accent:#3CC48E; --accent-ink:#04130C; --lottie:#9D8CFF; --avd:#3CC48E;
-  --warn:#F2B35B; --warn-bg:#2A2114; --err:#FF8A80; --err-bg:#2C1515;
-  --check-a:#1B2128; --check-b:#222A32; --code-bg:#11161B;
-  color-scheme: dark;
-}
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*,*::before,*::after{box-sizing:inherit}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.7}
-.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
-header.top{padding:12px 2px 18px}
-header.top h1{margin:0;font-size:clamp(22px,4.6vw,32px);font-weight:800;line-height:1.35;letter-spacing:-.01em}
-header.top h1 .arrow{color:var(--muted);font-weight:500;padding:0 .2em}
-header.top p{margin:6px 0 0;color:var(--muted);max-width:60ch}
-section.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
-section.panel h2{margin:0 0 10px;font-size:17px;font-weight:700}
-.drop{border:2px dashed var(--line);border-radius:12px;padding:18px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;background:var(--surface-2);transition:border-color .15s}
-.drop.over{border-color:var(--accent)}
-.drop p{margin:0;color:var(--muted)}
-.drop strong{color:var(--ink)}
-button,.btn{font:inherit;font-weight:600;font-size:14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;gap:6px}
-button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-button:disabled{opacity:.45;cursor:not-allowed}
-button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,.btn:focus-within{outline:3px solid var(--accent);outline-offset:2px}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-details.opts{margin-top:12px}
-details summary{cursor:pointer;font-weight:600;padding:4px 0}
-.grid-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:8px}
-.grid-opts label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
-input[type=text],input[type=number],select{font:inherit;font-size:14px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-height:38px}
-input[dir=ltr]{text-align:left}
-.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.chip{font-size:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--muted)}
-.chip b{color:var(--ink);font-weight:600}
-.msg{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:14px}
-.msg.err{background:var(--err-bg);color:var(--err)}
-.hidden{display:none !important}
-
-.mode{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.mode button{border:0;border-radius:0;min-height:36px;background:transparent}
-.mode button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
-.stages{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-.stagecol{min-width:0}
-.cap{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:6px}
-.dot{width:10px;height:10px;border-radius:50%;flex:none}
-.dot.l{background:var(--lottie)} .dot.a{background:var(--avd)}
-.stage{position:relative;aspect-ratio:var(--ar,1);max-height:60vh;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid var(--line);
-  background-color:var(--check-a);background-image:conic-gradient(var(--check-b) 25%,transparent 0 50%,var(--check-b) 0 75%,transparent 0);background-size:18px 18px}
-.stage .canvas{position:absolute;inset:0}
-.stage .canvas svg{width:100%;height:100%;display:block}
-.stage .empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px;text-align:center;padding:10px}
-.stages.overlay{grid-template-columns:1fr}
-.stages.overlay .stagecol.avdcol{display:none}
-.overlaybox{display:none}
-.stages.overlay .stage.lottie-stage{background:#000;isolation:isolate}
-.stages.overlay .overlaybox{display:block}
-.stages.overlay .overlaybox .canvas{mix-blend-mode:difference}
-.overlay-note{font-size:13px;color:var(--muted);margin-top:6px}
-
-.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
-.controls input[type=range]{flex:1 1 220px;accent-color:var(--accent);min-height:32px}
-.frame{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);min-width:96px;text-align:center}
-.check{display:inline-flex;align-items:center;gap:6px;font-size:14px}
-.note{font-size:13px;color:var(--muted);margin:10px 0 0}
-
-.warns{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.warns li{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:14px}
-.warns li.info{background:var(--surface-2);color:var(--muted)}
-.warns .n{font-variant-numeric:tabular-nums;opacity:.8;margin-inline-start:6px}
-
-textarea.code{width:100%;min-height:320px;resize:vertical;font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--code-bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;white-space:pre;overflow:auto;tab-size:4}
-pre.code{font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--code-bg);border:1px solid var(--line);border-radius:10px;padding:12px;overflow-x:auto;margin:8px 0 0}
-.howto ol{margin:8px 0 0;padding-inline-start:20px}
-.howto li{margin:4px 0}
-code.inl{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
-.toast{position:fixed;inset-inline:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));margin:auto;width:max-content;max-width:90vw;background:var(--ink);color:var(--surface);padding:8px 16px;border-radius:999px;font-size:14px;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:20}
-.toast.show{opacity:1;transform:none}
-@media (max-width:560px){
-  .wrap{padding:14px 12px 40px}
-  section.panel{padding:13px}
-  .stages{gap:8px}
-}
-@media (prefers-reduced-motion:reduce){*{transition:none !important}}
-</style>
+<meta name="description" content="Convert Lottie JSON animations to Android AnimatedVectorDrawable XML in the browser.">
+<title>Lottie to AnimatedVectorDrawable</title>
+<link rel="stylesheet" href="src/css/fonts.css">
+<link rel="stylesheet" href="src/css/styles.css">
+<script src="vendor/lottie-web/lottie_light.min.js" defer></script>
+<script type="module" src="src/js/ui/app.js"></script>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
-    <h1 dir="ltr" style="text-align:right">Lottie <span class="arrow">→</span> AnimatedVectorDrawable</h1>
-    <p>فایل JSON لوتی را بدهید، فایل XML آماده‌ی <code class="inl">res/drawable</code> بگیرید و نسخه‌ی اصلی و خروجی را هم‌زمان کنار هم ببینید.</p>
+    <div class="top-bar">
+      <div class="titles">
+        <h1><bdi dir="ltr">Lottie <span class="arrow">→</span> AnimatedVectorDrawable</bdi></h1>
+        <p data-i18n-html="header.subtitle"></p>
+      </div>
+      <button type="button" id="langBtn" class="lang-switch" data-i18n="meta.switchTo" data-i18n-attr="aria-label:meta.switchLabel"></button>
+    </div>
   </header>
 
   <section class="panel" aria-labelledby="h-in">
-    <h2 id="h-in">ورودی</h2>
+    <h2 id="h-in" data-i18n="input.heading"></h2>
     <div class="drop" id="drop">
-      <p><strong>فایل JSON را اینجا رها کنید</strong> یا از دستگاه انتخاب کنید.</p>
+      <p data-i18n-html="input.drop"></p>
       <div class="row">
-        <label class="btn primary" style="background:var(--accent);border-color:var(--accent);color:var(--accent-ink)">
-          انتخاب فایل
+        <label class="btn label-btn">
+          <span data-i18n="input.choose"></span>
           <input type="file" id="file" accept=".json,application/json" class="hidden">
         </label>
-        <button id="sample" type="button">اجرای نمونه</button>
+        <button id="sample" type="button" data-i18n="input.sample"></button>
       </div>
     </div>
     <details class="opts">
-      <summary>تنظیمات خروجی</summary>
+      <summary data-i18n="input.options"></summary>
       <div class="grid-opts">
-        <label>نام منبع اندروید
+        <label><span data-i18n="input.resName"></span>
           <input type="text" id="resName" dir="ltr" value="avd_animation" spellcheck="false">
         </label>
-        <label>عرض خروجی (dp)
+        <label><span data-i18n="input.width"></span>
           <input type="number" id="dp" dir="ltr" value="120" min="1" max="2000">
         </label>
-        <label>دقت اعشار
-          <select id="prec"><option value="1">۱ رقم</option><option value="2">۲ رقم</option><option value="3" selected>۳ رقم</option><option value="4">۴ رقم</option></select>
+        <label><span data-i18n="input.precision"></span>
+          <select id="prec">
+            <option value="1"></option><option value="2"></option><option value="3" selected></option><option value="4"></option>
+          </select>
         </label>
-        <label>گام نمونه‌برداری (فریم)
-          <select id="step"><option value="1" selected>هر فریم</option><option value="2">هر ۲ فریم</option><option value="3">هر ۳ فریم</option><option value="5">هر ۵ فریم</option></select>
+        <label><span data-i18n="input.step"></span>
+          <select id="step">
+            <option value="1" selected></option><option value="2"></option><option value="3"></option><option value="5"></option>
+          </select>
         </label>
       </div>
-      <p class="note">گام نمونه‌برداری فقط برای ویژگی‌هایی به کار می‌رود که معادل مستقیم در AVD ندارند. مقدار بزرگ‌تر یعنی XML کوچک‌تر و دقت کمتر.</p>
+      <p class="note" data-i18n="input.stepNote"></p>
     </details>
     <div class="meta" id="meta"></div>
     <div class="msg err hidden" id="err" role="alert"></div>
@@ -157,1019 +62,72 @@ code.inl{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padd
 
   <section class="panel" aria-labelledby="h-pv">
     <div class="row" style="justify-content:space-between">
-      <h2 id="h-pv" style="margin:0">پیش‌نمایش</h2>
-      <div class="mode" role="group" aria-label="حالت نمایش">
-        <button type="button" id="mSide" aria-pressed="true">کنار هم</button>
-        <button type="button" id="mOver" aria-pressed="false">روی هم (تفاوت)</button>
+      <h2 id="h-pv" style="margin:0" data-i18n="preview.heading"></h2>
+      <div class="mode" role="group" data-i18n-attr="aria-label:preview.modeLabel">
+        <button type="button" id="mSide" aria-pressed="true" data-i18n="preview.side"></button>
+        <button type="button" id="mOver" aria-pressed="false" data-i18n="preview.overlay"></button>
       </div>
     </div>
     <div class="stages" id="stages">
       <div class="stagecol">
-        <div class="cap"><span class="dot l"></span><span id="capL">Lottie (مرجع)</span></div>
+        <div class="cap"><span class="dot l"></span><span id="capL"></span></div>
         <div class="stage lottie-stage" id="stageL">
           <div class="canvas" id="lottieBox"></div>
           <div class="canvas overlaybox" id="overlayBox"></div>
-          <div class="empty" id="emptyL">هنوز فایلی انتخاب نشده</div>
+          <div class="empty" id="emptyL" data-i18n="preview.emptyL"></div>
         </div>
       </div>
       <div class="stagecol avdcol">
-        <div class="cap"><span class="dot a"></span>AVD (خروجی)</div>
+        <div class="cap"><span class="dot a"></span><span data-i18n="preview.avd"></span></div>
         <div class="stage" id="stageA">
           <div class="canvas" id="avdBox"></div>
-          <div class="empty" id="emptyA">خروجی اینجا پخش می‌شود</div>
+          <div class="empty" id="emptyA" data-i18n="preview.emptyA"></div>
         </div>
       </div>
     </div>
-    <p class="overlay-note hidden" id="overNote">در این حالت دو تصویر با حالت ترکیب Difference روی هم افتاده‌اند. هر جا سیاه است یعنی دو خروجی یکسان‌اند و هر جای رنگی تفاوت را نشان می‌دهد.</p>
+    <p class="overlay-note hidden" id="overNote" data-i18n="preview.overlayNote"></p>
     <div class="controls">
-      <button type="button" id="play" class="primary" aria-label="توقف">توقف</button>
-      <input type="range" id="scrub" min="0" max="1" step="0.01" value="0" aria-label="زمان انیمیشن">
+      <button type="button" id="play" class="primary"></button>
+      <input type="range" id="scrub" min="0" max="1" step="0.01" value="0" data-i18n-attr="aria-label:preview.timeline">
       <span class="frame" id="frameLbl">–</span>
-      <select id="speed" aria-label="سرعت پخش">
-        <option value="0.1">۰٫۱×</option><option value="0.25">۰٫۲۵×</option><option value="0.5">۰٫۵×</option>
-        <option value="1" selected>۱×</option><option value="2">۲×</option>
+      <select id="speed" data-i18n-attr="aria-label:preview.speed">
+        <option value="0.1"></option><option value="0.25"></option><option value="0.5"></option>
+        <option value="1" selected></option><option value="2"></option>
       </select>
-      <label class="check"><input type="checkbox" id="loop" checked> تکرار</label>
+      <label class="check"><input type="checkbox" id="loop" checked> <span data-i18n="preview.loop"></span></label>
     </div>
-    <p class="note">پیش‌نمایش AVD با یک شبیه‌ساز داخل مرورگر رسم می‌شود. رندر واقعی اندروید ممکن است جزئیات کمی متفاوت داشته باشد، مثلاً در ضخامت خط‌ها هنگام تغییر مقیاس.</p>
+    <p class="note" data-i18n="preview.note"></p>
   </section>
 
   <section class="panel hidden" id="warnPanel" aria-labelledby="h-w">
-    <h2 id="h-w">گزارش تبدیل</h2>
+    <h2 id="h-w" data-i18n="report.heading"></h2>
     <ul class="warns" id="warns"></ul>
   </section>
 
   <section class="panel" aria-labelledby="h-out">
     <div class="row" style="justify-content:space-between">
-      <h2 id="h-out" style="margin:0">خروجی XML</h2>
+      <h2 id="h-out" style="margin:0" data-i18n="output.heading"></h2>
       <div class="row">
-        <button type="button" id="copy" disabled>کپی XML</button>
-        <button type="button" id="dl" class="hidden" disabled>دانلود</button>
+        <button type="button" id="copy" disabled data-i18n="output.copy"></button>
+        <button type="button" id="dl" disabled data-i18n="output.download"></button>
       </div>
     </div>
-    <p class="note" style="margin-top:4px">می‌توانید XML را همین‌جا ویرایش کنید و نتیجه را در پیش‌نمایش ببینید.</p>
-    <textarea class="code" id="xml" dir="ltr" spellcheck="false" aria-label="XML خروجی" placeholder="&lt;animated-vector …"></textarea>
+    <p class="note" style="margin-top:4px" data-i18n="output.editNote"></p>
+    <textarea class="code" id="xml" dir="ltr" spellcheck="false" data-i18n-attr="aria-label:output.xmlLabel" placeholder="&lt;animated-vector …"></textarea>
     <div class="row" style="margin-top:8px">
-      <button type="button" id="apply" disabled>اجرای XML ویرایش‌شده در پیش‌نمایش</button>
+      <button type="button" id="apply" disabled data-i18n="output.apply"></button>
     </div>
     <details class="howto" style="margin-top:14px">
-      <summary>استفاده در اندروید</summary>
+      <summary data-i18n="output.howto"></summary>
       <ol>
-        <li>فایل را با نام <code class="inl" id="fnameInl">avd_animation.xml</code> در پوشه‌ی <code class="inl">res/drawable</code> بگذارید.</li>
-        <li>این فایل از قالب درون‌خطی <code class="inl">aapt:attr</code> استفاده می‌کند که با Android Gradle Plugin کامپایل می‌شود.</li>
-        <li>AVD به‌صورت پیش‌فرض تکرار نمی‌شود. برای پخش پیوسته از کد زیر استفاده کنید:</li>
+        <li id="howtoStep1"></li>
+        <li data-i18n-html="output.step2"></li>
+        <li data-i18n-html="output.step3"></li>
       </ol>
-<pre class="code" dir="ltr" id="kotlin"></pre>
+      <pre class="code" dir="ltr" id="kotlin"></pre>
     </details>
   </section>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-<script>
-(function(){
-'use strict';
-const $ = s => document.querySelector(s);
-const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
-const AAPT_NS = 'http://schemas.android.com/aapt';
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
-const fa = n => Number(n).toLocaleString('fa-IR');
-let PREC = 3;
-
-/* ================= ریاضیات مشترک ================= */
-function makeBezier(x1,y1,x2,y2){
-  if (Math.abs(x1-y1)<1e-9 && Math.abs(x2-y2)<1e-9) return t=>t;
-  const cx=3*x1, bx=3*(x2-x1)-cx, ax=1-cx-bx;
-  const cy=3*y1, by=3*(y2-y1)-cy, ay=1-cy-by;
-  const X=t=>((ax*t+bx)*t+cx)*t, Y=t=>((ay*t+by)*t+cy)*t, DX=t=>(3*ax*t+2*bx)*t+cx;
-  return x=>{
-    if (x<=0) return 0; if (x>=1) return 1;
-    let t=x;
-    for (let i=0;i<8;i++){ const e=X(t)-x; if (Math.abs(e)<1e-7) return Y(t); const d=DX(t); if (Math.abs(d)<1e-7) break; t-=e/d; }
-    let lo=0, hi=1; t=x;
-    for (let i=0;i<50;i++){ const v=X(t); if (Math.abs(v-x)<1e-7) break; if (v<x) lo=t; else hi=t; t=(lo+hi)/2; }
-    return Y(t);
-  };
-}
-function fmt(n){ if (!isFinite(n)) n=0; let r=+(+n).toFixed(PREC); if (r===0) r=0; return String(r); }
-function colorHex(c){
-  let [r,g,b]=c; if (r>1||g>1||b>1){ r/=255; g/=255; b/=255; }
-  const h=v=>Math.round(clamp(v||0,0,1)*255).toString(16).padStart(2,'0').toUpperCase();
-  return '#'+h(r)+h(g)+h(b);
-}
-function fmtVal(type,v){ return type==='colorType' ? colorHex(v) : type==='pathType' ? v : fmt(v); }
-
-/* ================= خواندن Lottie ================= */
-function isAnim(p){ return !!(p && Array.isArray(p.k) && p.k.length>0 && p.k[0] && typeof p.k[0]==='object' && !Array.isArray(p.k[0]) && 't' in p.k[0]); }
-function nv(v,kind){ if (kind==='shape') return Array.isArray(v) ? v[0] : v; return Array.isArray(v) ? v : [v]; }
-function pick(v,d){ return Array.isArray(v) ? (v[d]!==undefined ? v[d] : v[0]) : v; }
-function easeCtl(kf,d){
-  const x1=pick(kf.o&&kf.o.x,d), y1=pick(kf.o&&kf.o.y,d), x2=pick(kf.i&&kf.i.x,d), y2=pick(kf.i&&kf.i.y,d);
-  if ([x1,y1,x2,y2].some(v=>typeof v!=='number'||!isFinite(v))) return {x1:0,y1:0,x2:1,y2:1};
-  return {x1:clamp(x1,0,1), y1, x2:clamp(x2,0,1), y2};
-}
-const segCache = new WeakMap();
-function getSegs(prop){
-  let s=segCache.get(prop); if (s) return s;
-  const k=prop.k; s=[]; let prev=null;
-  for (let i=0;i<k.length;i++){
-    const kf=k[i], nx=k[i+1];
-    const v0 = kf.s!==undefined ? kf.s : prev;
-    if (!nx){ s.last = v0!=null ? v0 : prev; break; }
-    const v1 = kf.e!==undefined ? kf.e : (nx.s!==undefined ? nx.s : v0);
-    s.push({t0:kf.t, t1:nx.t, v0, v1, kf, hold: kf.h===1||kf.h===true, ease:[]});
-    prev=v1;
-  }
-  if (s.last==null) s.last = prev!=null ? prev : k[0].s;
-  segCache.set(prop,s); return s;
-}
-function segEase(sg,d){
-  if (!sg.ease[d]){ const c=easeCtl(sg.kf,d); sg.ease[d]={c, fn:makeBezier(c.x1,c.y1,c.x2,c.y2)}; }
-  return sg.ease[d];
-}
-function hasSpatial(sg){
-  const nz=a=>Array.isArray(a)&&a.some(v=>Math.abs(v)>1e-6);
-  return nz(sg.kf.to)||nz(sg.kf.ti);
-}
-function cubicPt(P,u){
-  const m=1-u, a=m*m*m, b=3*m*m*u, c=3*m*u*u, d=u*u*u;
-  return [a*P[0][0]+b*P[1][0]+c*P[2][0]+d*P[3][0], a*P[0][1]+b*P[1][1]+c*P[2][1]+d*P[3][1]];
-}
-function spatialPoint(sg,a,b,e){
-  if (!sg.arc){
-    const to=sg.kf.to||[0,0], ti=sg.kf.ti||[0,0];
-    const P=[a,[a[0]+to[0],a[1]+to[1]],[b[0]+ti[0],b[1]+ti[1]],b];
-    const N=80, pts=[], len=[0];
-    for (let i=0;i<=N;i++){ pts.push(cubicPt(P,i/N)); if (i) len.push(len[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1])); }
-    sg.arc={pts,len,total:len[N]};
-  }
-  const {pts,len,total}=sg.arc;
-  if (total<1e-9) return [a[0],a[1]];
-  const target=clamp(e,0,1)*total;
-  let lo=0, hi=len.length-1;
-  while (hi-lo>1){ const m=(lo+hi)>>1; if (len[m]<=target) lo=m; else hi=m; }
-  const span=len[hi]-len[lo], f=span>0?(target-len[lo])/span:0;
-  return [pts[lo][0]+(pts[hi][0]-pts[lo][0])*f, pts[lo][1]+(pts[hi][1]-pts[lo][1])*f];
-}
-function lerpShape(a,b,e){
-  if (!a||!b||!a.v||!b.v||a.v.length!==b.v.length) return e<1 ? a : b;
-  const L=(A,B)=>A.map((p,i)=>[p[0]+((B[i]||p)[0]-p[0])*e, p[1]+((B[i]||p)[1]-p[1])*e]);
-  return {v:L(a.v,b.v), i:L(a.i||a.v.map(()=>[0,0]), b.i||b.v.map(()=>[0,0])), o:L(a.o||a.v.map(()=>[0,0]), b.o||b.v.map(()=>[0,0])), c:a.c};
-}
-function interpSeg(sg,p,kind){
-  const a=nv(sg.v0,kind), b=nv(sg.v1,kind);
-  if (kind==='shape') return lerpShape(a,b,segEase(sg,0).fn(p));
-  if (kind==='pos' && hasSpatial(sg)) return spatialPoint(sg,a,b,segEase(sg,0).fn(p));
-  const out=[];
-  for (let d=0; d<a.length; d++){ const e=segEase(sg,d).fn(p); const bd=b[d]!==undefined?b[d]:a[d]; out.push(a[d]+(bd-a[d])*e); }
-  return out;
-}
-function propAt(prop,t,kind){
-  if (!isAnim(prop)) return nv(prop.k,kind);
-  const segs=getSegs(prop);
-  if (!segs.length) return nv(segs.last,kind);
-  if (t<=segs[0].t0) return nv(segs[0].v0,kind);
-  for (const sg of segs){
-    if (t<sg.t1){
-      if (t<sg.t0 || sg.hold || sg.t1<=sg.t0) return nv(sg.v0,kind);
-      return interpSeg(sg,(t-sg.t0)/(sg.t1-sg.t0),kind);
-    }
-  }
-  return nv(segs.last,kind);
-}
-
-/* ============ ساخت مسیرها ============ */
-const KAPPA=0.5522847498;
-function P(p){ return fmt(p[0])+','+fmt(p[1]); }
-function shapeToD(sh){
-  if (!sh||!sh.v||!sh.v.length) return 'M0,0';
-  const v=sh.v, I=sh.i||[], O=sh.o||[], n=v.length;
-  const add=(a,b)=>[a[0]+(b?b[0]:0), a[1]+(b?b[1]:0)];
-  let d='M'+P(v[0]);
-  for (let j=1;j<n;j++) d+=' C'+P(add(v[j-1],O[j-1]))+' '+P(add(v[j],I[j]))+' '+P(v[j]);
-  if (sh.c) d+=' C'+P(add(v[n-1],O[n-1]))+' '+P(add(v[0],I[0]))+' '+P(v[0])+' Z';
-  return d;
-}
-function geomD(item,t){
-  const g=(p,def)=> p ? propAt(p,t,'num') : def;
-  if (item.ty==='el'){
-    const p=g(item.p,[0,0]), s=g(item.s,[0,0]);
-    const cx=p[0], cy=p[1], rx=s[0]/2, ry=(s[1]!==undefined?s[1]:s[0])/2, kx=rx*KAPPA, ky=ry*KAPPA;
-    return 'M'+P([cx,cy-ry])+
-      ' C'+P([cx+kx,cy-ry])+' '+P([cx+rx,cy-ky])+' '+P([cx+rx,cy])+
-      ' C'+P([cx+rx,cy+ky])+' '+P([cx+kx,cy+ry])+' '+P([cx,cy+ry])+
-      ' C'+P([cx-kx,cy+ry])+' '+P([cx-rx,cy+ky])+' '+P([cx-rx,cy])+
-      ' C'+P([cx-rx,cy-ky])+' '+P([cx-kx,cy-ry])+' '+P([cx,cy-ry])+' Z';
-  }
-  if (item.ty==='rc'){
-    const p=g(item.p,[0,0]), s=g(item.s,[0,0]);
-    const w=s[0], h=s[1]!==undefined?s[1]:s[0];
-    const r=clamp(g(item.r,[0])[0]||0, 0, Math.min(Math.abs(w),Math.abs(h))/2);
-    const L=p[0]-w/2, R=p[0]+w/2, T=p[1]-h/2, B=p[1]+h/2;
-    const corner=(A,C,Bp)=>' C'+P([A[0]+(C[0]-A[0])*KAPPA, A[1]+(C[1]-A[1])*KAPPA])+' '+P([Bp[0]+(C[0]-Bp[0])*KAPPA, Bp[1]+(C[1]-Bp[1])*KAPPA])+' '+P(Bp);
-    return 'M'+P([R,T+r])+' L'+P([R,B-r])+corner([R,B-r],[R,B],[R-r,B])+
-      ' L'+P([L+r,B])+corner([L+r,B],[L,B],[L,B-r])+
-      ' L'+P([L,T+r])+corner([L,T+r],[L,T],[L+r,T])+
-      ' L'+P([R-r,T])+corner([R-r,T],[R,T],[R,T+r])+' Z';
-  }
-  if (item.ty==='sr'){
-    const p=g(item.p,[0,0]), pts=Math.max(3,Math.round(g(item.pt,[5])[0])), or=g(item.or,[10])[0], ir=g(item.ir,[5])[0], rot=g(item.r,[0])[0];
-    const star=item.sy!==2, n=star?pts*2:pts, step=2*Math.PI/n, a0=(rot-90)*Math.PI/180;
-    let d='';
-    for (let i=0;i<n;i++){ const r=star&&i%2?ir:or; const pt=[p[0]+r*Math.cos(a0+i*step), p[1]+r*Math.sin(a0+i*step)]; d+=(i?' L':'M')+P(pt); }
-    return d+' Z';
-  }
-  return 'M0,0';
-}
-
-/* ============ Trackها: مقدار هر ویژگی در طول زمان ============ */
-function mapT(m,t){ return m.a*t+m.b; }
-function unmap(m,f){ return (f-m.b)/m.a; }
-function constTrack(v,type){ return {type:type||'floatType', animated:false, at:()=>v, exact:()=>[]}; }
-function numTrack(prop,map,d,kind,fn,def){
-  fn = fn || (v=>v);
-  if (!prop) return constTrack(fn(def||0));
-  kind = kind||'num';
-  return {
-    type:'floatType', animated:isAnim(prop),
-    at(f){ const v=propAt(prop,unmap(map,f),kind); const x=v[d]!==undefined?v[d]:v[0]; return fn(x); },
-    exact(){
-      if (!isAnim(prop)) return [];
-      const segs=getSegs(prop);
-      if (kind==='pos' && segs.some(hasSpatial)) return null;
-      return segs.map(sg=>{
-        const a=nv(sg.v0,kind), b=nv(sg.v1,kind);
-        const av=a[d]!==undefined?a[d]:a[0], bv=b[d]!==undefined?b[d]:(b[0]!==undefined?b[0]:av);
-        return {f0:mapT(map,sg.t0), f1:mapT(map,sg.t1), v0:fn(av), v1:fn(bv), ease:segEase(sg,d).c, hold:sg.hold};
-      });
-    }
-  };
-}
-function offsetTrack(t,k){
-  if (!k) return t;
-  return {type:t.type, animated:t.animated, at:f=>t.at(f)+k, exact(){ const e=t.exact(); return e && e.map(s=>Object.assign({},s,{v0:s.v0+k, v1:s.v1+k})); }};
-}
-function prodTrack(tracks){
-  tracks=tracks.filter(Boolean);
-  const anim=tracks.filter(t=>t.animated);
-  return {type:'floatType', animated:anim.length>0,
-    at:f=>tracks.reduce((m,t)=>m*t.at(f),1),
-    exact(){
-      if (!anim.length) return [];
-      if (anim.length>1) return null;
-      const ex=anim[0].exact(); if (!ex) return null;
-      const k=tracks.filter(t=>!t.animated).reduce((m,t)=>m*t.at(0),1);
-      return ex.map(s=>Object.assign({},s,{v0:s.v0*k, v1:s.v1*k}));
-    }};
-}
-function colorTrack(prop,map){
-  if (!prop) return constTrack([0,0,0],'colorType');
-  return {type:'colorType', animated:isAnim(prop),
-    at(f){ const v=propAt(prop,unmap(map,f),'num'); return [v[0],v[1],v[2]]; },
-    exact(){
-      if (!isAnim(prop)) return [];
-      return getSegs(prop).map(sg=>({f0:mapT(map,sg.t0), f1:mapT(map,sg.t1), v0:nv(sg.v0).slice(0,3), v1:nv(sg.v1).slice(0,3), ease:segEase(sg,0).c, hold:sg.hold}));
-    }};
-}
-
-/* ================= مبدل ================= */
-const WARN = {
-  matte:'Track Matte پشتیبانی نمی‌شود و لایه بدون مت رسم شد.',
-  mask:'ماسک‌ها پشتیبانی نمی‌شوند و نادیده گرفته شدند.',
-  d3:'لایه‌ها و چرخش‌های سه‌بعدی پشتیبانی نمی‌شوند.',
-  effects:'افکت‌های لایه نادیده گرفته شدند.',
-  timeremap:'Time Remap پشتیبانی نمی‌شود.',
-  image:'لایه‌های تصویری پشتیبانی نمی‌شوند.',
-  text:'لایه‌های متن پشتیبانی نمی‌شوند. در After Effects متن را به Shape تبدیل کنید.',
-  unknownLayer:'یک نوع لایه‌ی ناشناخته نادیده گرفته شد.',
-  skew:'Skew پشتیبانی نمی‌شود.',
-  gradient:'گرادیان با اولین رنگ آن جایگزین شد.',
-  dash:'خط‌چین (Dash) پشتیبانی نمی‌شود و خط پیوسته رسم شد.',
-  merge:'Merge Paths پشتیبانی نمی‌شود.',
-  repeater:'Repeater پشتیبانی نمی‌شود.',
-  roundcorner:'Round Corners پشتیبانی نمی‌شود.',
-  twist:'Twist، Pucker/Bloat یا Offset Path پشتیبانی نمی‌شود.',
-  unknownShape:'یک نوع شکل ناشناخته نادیده گرفته شد.',
-  morph:'تعداد رأس‌های یک شکل در کی‌فریم‌ها یکسان نیست، پس تغییر شکل آن حذف شد.',
-  multitrim:'روی یک مسیر چند Trim Path بود و فقط اولی اعمال شد.',
-  trimSim:'Trim Path در حالت Simultaneously برای هر مسیر جداگانه اعمال شد.',
-  starRound:'گردی گوشه‌های ستاره نادیده گرفته شد.',
-  expr:'Expressionها پشتیبانی نمی‌شوند و فقط کی‌فریم‌های ثابت آن‌ها استفاده شد.',
-  noAnim:'هیچ ویژگی متحرکی در خروجی پیدا نشد.'
-};
-
-function sanitize(s){
-  s=String(s||'').replace(/[^A-Za-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
-  if (!/^[A-Za-z]/.test(s)) s='n'+s;
-  return s.slice(0,32);
-}
-function scanExpr(o,depth){
-  if (!o||typeof o!=='object'||depth>60) return false;
-  if (typeof o.x==='string' && 'k' in o) return true;
-  for (const k in o){ if (o[k]&&typeof o[k]==='object' && scanExpr(o[k],depth+1)) return true; }
-  return false;
-}
-
-function convert(json, opts){
-  if (!json || typeof json!=='object' || !Array.isArray(json.layers) || !json.w || !json.h)
-    throw new Error('این فایل یک انیمیشن Lottie معتبر نیست. فیلدهای w، h و layers پیدا نشدند.');
-  const W=json.w, H=json.h, fr=json.fr||30, ip=json.ip||0, op=json.op!=null?json.op:ip+fr;
-  const step=Math.max(1, opts.step||1);
-  const warns=new Map();
-  const warn=k=>{ const w=warns.get(k)||{msg:WARN[k],count:0}; w.count++; warns.set(k,w); };
-  let counter=0;
-  const uname=b=>sanitize(b)+'_'+(++counter);
-  const assets={}; (json.assets||[]).forEach(a=>{ if (a&&a.id) assets[a.id]=a; });
-  if (scanExpr(json,0)) warn('expr');
-
-  const node=(tag,name)=>({tag,name,stat:{},tracks:{},children:[]});
-  const root=node('root','root');
-
-  function layerMap(compMap,L){ const sr=L.sr||1, st=L.st||0; return {a:compMap.a*sr, b:compMap.a*st+compMap.b}; }
-  function visTrack(L,compMap){
-    const cS=unmap(compMap,ip), cE=unmap(compMap,op);
-    const lip=L.ip!=null?L.ip:-Infinity, lop=L.op!=null?L.op:Infinity;
-    if (lip<=cS+1e-6 && lop>=cE-1e-6) return constTrack(1);
-    if (lop<=cS+1e-6 || lip>=cE-1e-6) return constTrack(0);
-    return {type:'floatType', animated:true,
-      at(f){ const c=unmap(compMap,f); return (c>=lip-1e-6 && c<lop-1e-6)?1:0; },
-      exact(){
-        const segs=[], fIn=mapT(compMap,lip), fOut=mapT(compMap,lop);
-        if (fIn>ip+1e-6) segs.push({f0:fIn,f1:fIn,v0:0,v1:1,hold:true});
-        if (fOut<op-1e-6) segs.push({f0:fOut,f1:fOut,v0:1,v1:0,hold:true});
-        return segs;
-      }};
-  }
-  function addTransform(host, ks, map, label){
-    ks=ks||{};
-    const pos=ks.p, anc=ks.a, sc=ks.s, rot=ks.r||ks.rz;
-    if (ks.sk && (isAnim(ks.sk) || Math.abs(propAt(ks.sk,0,'num')[0]||0)>1e-6)) warn('skew');
-    const nonzero=p=>p && (isAnim(p) || Math.abs(propAt(p,0,'num')[0]||0)>1e-6);
-    if (nonzero(ks.rx)||nonzero(ks.ry)) warn('d3');
-    let tx, ty;
-    if (pos && pos.s && (pos.x||pos.y)){ tx=numTrack(pos.x,map,0,'num'); ty=numTrack(pos.y,map,0,'num'); }
-    else if (pos){ tx=numTrack(pos,map,0,'pos'); ty=numTrack(pos,map,1,'pos'); }
-    else { tx=constTrack(0); ty=constTrack(0); }
-    const sx=numTrack(sc,map,0,'num',v=>v/100,100), sy=numTrack(sc,map,1,'num',v=>v/100,100);
-    const r=numTrack(rot,map,0,'num');
-    const g=node('group',uname(label)); host.children.push(g);
-    g.tracks.rotation=r; g.tracks.scaleX=sx; g.tracks.scaleY=sy;
-    if (!anc || !isAnim(anc)){
-      const a0=anc?propAt(anc,0,'num'):[0,0]; const ax=a0[0]||0, ay=a0[1]||0;
-      g.stat.pivotX=ax; g.stat.pivotY=ay;
-      g.tracks.translateX=offsetTrack(tx,-ax); g.tracks.translateY=offsetTrack(ty,-ay);
-      return g;
-    }
-    g.tracks.translateX=tx; g.tracks.translateY=ty;
-    const inner=node('group',uname(label+'_anchor')); g.children.push(inner);
-    inner.tracks.translateX=numTrack(anc,map,0,'num',v=>-v);
-    inner.tracks.translateY=numTrack(anc,map,1,'num',v=>-v);
-    return inner;
-  }
-
-  const GEOM={sh:1,rc:1,el:1,sr:1};
-  function geomTrack(item,map){
-    if (item.ty==='sh'){
-      const prop=item.ks;
-      if (!prop) return constTrack('M0,0','pathType');
-      let animated=isAnim(prop);
-      if (animated){
-        const segs=getSegs(prop);
-        const counts=new Set(); segs.forEach(s=>{ const a=nv(s.v0,'shape'), b=nv(s.v1,'shape'); if (a&&a.v) counts.add(a.v.length+(a.c?'c':'o')); if (b&&b.v) counts.add(b.v.length+(b.c?'c':'o')); });
-        if (counts.size>1){ warn('morph'); animated=false; }
-      }
-      const t0=unmap(map,ip);
-      if (!animated) return constTrack(shapeToD(propAt(prop,t0,'shape')),'pathType');
-      return {type:'pathType', animated:true,
-        at:f=>shapeToD(propAt(prop,unmap(map,f),'shape')),
-        exact:()=>getSegs(prop).map(sg=>({f0:mapT(map,sg.t0), f1:mapT(map,sg.t1), v0:shapeToD(nv(sg.v0,'shape')), v1:shapeToD(nv(sg.v1,'shape')), ease:segEase(sg,0).c, hold:sg.hold}))};
-    }
-    if (item.ty==='sr'){
-      if ((item.is&&(isAnim(item.is)||propAt(item.is,0,'num')[0]))||(item.os&&(isAnim(item.os)||propAt(item.os,0,'num')[0]))) warn('starRound');
-      if (isAnim(item.pt)) warn('morph');
-    }
-    const props=[item.p,item.s,item.r,item.or,item.ir].filter(Boolean);
-    const animated=props.some(isAnim);
-    if (!animated) return constTrack(geomD(item,unmap(map,ip)),'pathType');
-    return {type:'pathType', animated:true, at:f=>geomD(item,unmap(map,f)), exact:()=>null};
-  }
-  function firstGradColor(st){
-    try{
-      const gp=st.g&&st.g.k; const arr=isAnim(gp)? nv(gp.k[0].s) : gp.k;
-      return [arr[1],arr[2],arr[3]];
-    }catch(e){ return [0.5,0.5,0.5]; }
-  }
-  function collectGeoms(list, upto, chain, out){
-    for (let j=0;j<upto;j++){
-      const it=list[j];
-      if (GEOM[it.ty]){
-        out.push({geom:it, chain:chain.slice(), trims:list.slice(j+1,upto).filter(x=>x.ty==='tm')});
-      } else if (it.ty==='gr'){
-        const sub=(it.it||[]).filter(x=>x&&!x.hd&&x.ty!=='tr');
-        const tr=(it.it||[]).find(x=>x&&x.ty==='tr');
-        const start=out.length;
-        collectGeoms(sub, sub.length, chain.concat([{tr, nm:it.nm}]), out);
-        const outer=list.slice(j+1,upto).filter(x=>x.ty==='tm');
-        for (let q=start;q<out.length;q++) out[q].trims=out[q].trims.concat(outer);
-      }
-    }
-  }
-  function emitPath(host, style, g, ctx){
-    let h=host;
-    for (const c of g.chain) h=addTransform(h, c.tr, ctx.map, c.nm||'group');
-    const p=node('path',uname(style.nm||g.geom.nm||'path'));
-    h.children.push(p);
-    p.tracks.pathData=geomTrack(g.geom, ctx.map);
-    const alpha=prodTrack(ctx.alpha.concat([numTrack(style.o,ctx.map,0,'num',v=>v/100,100)]));
-    const isFill=style.ty==='fl'||style.ty==='gf';
-    if (style.ty==='gf'||style.ty==='gs') warn('gradient');
-    if (isFill){
-      p.tracks.fillColor = style.ty==='fl' ? colorTrack(style.c,ctx.map) : constTrack(firstGradColor(style),'colorType');
-      p.tracks.fillAlpha = alpha;
-      if (style.r===2) p.stat.fillType='evenOdd';
-    } else {
-      p.tracks.strokeColor = style.ty==='st' ? colorTrack(style.c,ctx.map) : constTrack(firstGradColor(style),'colorType');
-      p.tracks.strokeAlpha = alpha;
-      p.tracks.strokeWidth = numTrack(style.w,ctx.map,0,'num',null,1);
-      p.stat.strokeLineCap = ({1:'butt',2:'round',3:'square'})[style.lc] || 'butt';
-      p.stat.strokeLineJoin = ({1:'miter',2:'round',3:'bevel'})[style.lj] || 'miter';
-      if (p.stat.strokeLineJoin==='miter') p.stat.strokeMiterLimit = style.ml!=null ? style.ml : 4;
-      if (Array.isArray(style.d) && style.d.length) warn('dash');
-    }
-    if (g.trims.length){
-      const tm=g.trims[0];
-      if (g.trims.length>1) warn('multitrim');
-      if (tm.m===1 && ctx.geomCount>1) warn('trimSim');
-      p.tracks.trimPathStart = numTrack(tm.s,ctx.map,0,'num',v=>v/100,0);
-      p.tracks.trimPathEnd = numTrack(tm.e,ctx.map,0,'num',v=>v/100,100);
-      p.tracks.trimPathOffset = numTrack(tm.o,ctx.map,0,'num',v=>v/360,0);
-    }
-  }
-  function renderShapes(items, host, ctx){
-    const list=(items||[]).filter(it=>it && !it.hd && it.ty!=='tr');
-    for (let i=list.length-1;i>=0;i--){
-      const it=list[i];
-      if (it.ty==='fl'||it.ty==='st'||it.ty==='gf'||it.ty==='gs'){
-        const geoms=[]; collectGeoms(list,i,[],geoms);
-        const c2=Object.assign({},ctx,{geomCount:geoms.length});
-        for (const g of geoms) emitPath(host,it,g,c2);
-      } else if (it.ty==='gr'){
-        const tr=(it.it||[]).find(x=>x&&x.ty==='tr');
-        const g=addTransform(host, tr, ctx.map, it.nm||'group');
-        const alpha = tr&&tr.o ? ctx.alpha.concat([numTrack(tr.o,ctx.map,0,'num',v=>v/100,100)]) : ctx.alpha;
-        renderShapes(it.it, g, Object.assign({},ctx,{alpha}));
-      } else if (it.ty==='mm') warn('merge');
-      else if (it.ty==='rp') warn('repeater');
-      else if (it.ty==='rd') warn('roundcorner');
-      else if (it.ty==='tw'||it.ty==='pb'||it.ty==='op'||it.ty==='zz') warn('twist');
-      else if (!GEOM[it.ty] && it.ty!=='tm') warn('unknownShape');
-    }
-  }
-  function renderComp(layers, ctx, parent){
-    const byInd=new Map(); layers.forEach(l=>{ if (l&&l.ind!=null) byInd.set(l.ind,l); });
-    for (let i=layers.length-1;i>=0;i--){
-      const L=layers[i];
-      if (!L || L.hd || L.td) continue;
-      if (L.tt) warn('matte');
-      if (L.hasMask || (L.masksProperties&&L.masksProperties.length)) warn('mask');
-      if (L.ddd) warn('d3');
-      if (L.ef && L.ef.length) warn('effects');
-      if (L.tm) warn('timeremap');
-      const vis=visTrack(L,ctx.map);
-      if (!vis.animated && vis.at(0)===0) continue;
-      if (L.ty===3) continue;
-      if (L.ty===2){ warn('image'); continue; }
-      if (L.ty===5){ warn('text'); continue; }
-      if (![0,1,4].includes(L.ty)){ warn('unknownLayer'); continue; }
-      const chain=[]; let cur=L; const seen=new Set([L]);
-      while (cur){ chain.unshift(cur); if (cur.parent==null) break; const p=byInd.get(cur.parent); if (!p||seen.has(p)) break; seen.add(p); cur=p; }
-      let host=parent;
-      for (const c of chain) host=addTransform(host, c.ks, layerMap(ctx.map,c), c.nm||'layer');
-      const lm=layerMap(ctx.map,L);
-      const alpha=ctx.alpha.concat([numTrack(L.ks&&L.ks.o,lm,0,'num',v=>v/100,100), vis]);
-      if (L.ty===4) renderShapes(L.shapes, host, {map:lm, alpha});
-      else if (L.ty===1){
-        const sw=L.sw||0, sh=L.sh||0;
-        const p=node('path',uname((L.nm||'solid')));
-        host.children.push(p);
-        p.tracks.pathData=constTrack('M0,0 L'+fmt(sw)+',0 L'+fmt(sw)+','+fmt(sh)+' L0,'+fmt(sh)+' Z','pathType');
-        const hex=(L.sc||'#000000').replace('#','');
-        p.tracks.fillColor=constTrack([parseInt(hex.slice(0,2),16)/255,parseInt(hex.slice(2,4),16)/255,parseInt(hex.slice(4,6),16)/255],'colorType');
-        p.tracks.fillAlpha=prodTrack(alpha);
-      } else if (L.ty===0){
-        const a=assets[L.refId];
-        if (a && Array.isArray(a.layers) && (ctx.depth||0)<12) renderComp(a.layers, {map:lm, alpha, depth:(ctx.depth||0)+1}, host);
-      }
-    }
-  }
-  renderComp(json.layers, {map:{a:1,b:0}, alpha:[], depth:0}, root);
-
-  /* --- حذف گروه‌های خالی --- */
-  (function prune(n){ n.children=n.children.filter(c=>{ if (c.tag==='path') return true; prune(c); return c.children.length>0; }); })(root);
-
-  /* --- تبدیل Track به انیماتور --- */
-  const DEF={pivotX:'0',pivotY:'0',rotation:'0',scaleX:'1',scaleY:'1',translateX:'0',translateY:'0',fillAlpha:'1',strokeAlpha:'1',trimPathStart:'0',trimPathEnd:'1',trimPathOffset:'0'};
-  const eqTol=type=> type==='colorType'?1/512 : Math.max(Math.pow(10,-PREC)/2,1e-6);
-  let baked=0;
-  function bake(track){
-    const fs=[]; for (let f=ip; f<op-1e-9; f+=step) fs.push(f); fs.push(op);
-    const raw=fs.map(f=>track.at(f));
-    if (track.type==='pathType'){
-      const sig=s=>s.replace(/-?\d*\.?\d+(e[-+]?\d+)?/gi,'#');
-      const segs=[]; const s0=sig(raw[0]);
-      for (let i=0;i<raw.length-1;i++){
-        if (raw[i]===raw[i+1]) continue;
-        if (sig(raw[i+1])!==s0){ warn('morph'); return []; }
-        segs.push({f0:fs[i], f1:fs[i+1], v0:raw[i], v1:raw[i+1], ease:null});
-      }
-      return segs;
-    }
-    const vec=raw.map(v=>Array.isArray(v)?v:[v]);
-    const eps=eqTol(track.type);
-    const segs=[]; let s=0;
-    while (s<fs.length-1){
-      let e=s+1;
-      while (e+1<fs.length){
-        const c=e+1; let ok=true;
-        for (let k=s+1;k<c && ok;k++){
-          const p=(fs[k]-fs[s])/(fs[c]-fs[s]);
-          for (let d=0; d<vec[s].length; d++){ const lv=vec[s][d]+(vec[c][d]-vec[s][d])*p; if (Math.abs(lv-vec[k][d])>eps){ ok=false; break; } }
-        }
-        if (!ok) break; e=c;
-      }
-      const same=vec[s].every((v,d)=>Math.abs(v-vec[e][d])<=eps);
-      if (!same) segs.push({f0:fs[s], f1:fs[e], v0:raw[s], v1:raw[e], ease:null});
-      s=e;
-    }
-    return segs;
-  }
-  function trackSegs(track){
-    if (!track.animated) return [];
-    let segs=track.exact();
-    if (segs){
-      const eq=(a,b)=>fmtVal(track.type,a)===fmtVal(track.type,b);
-      let ok=true; const out=[];
-      for (const s of segs){
-        if (s.hold || s.f1<=s.f0){ if (s.f1>ip+1e-6 && s.f1<op-1e-6 && !eq(s.v0,s.v1)) out.push(Object.assign({},s,{hold:true})); continue; }
-        if (s.f1<=ip+1e-6 || s.f0>=op-1e-6) continue;
-        if (s.f0<ip-1e-6 || s.f1>op+1e-6){ ok=false; break; }
-        if (!eq(s.v0,s.v1)) out.push(s);
-      }
-      if (ok) return out;
-    }
-    baked++;
-    return bake(track);
-  }
-  const compileNode=n=>{
-    n.attrs={}; n.anims=[];
-    for (const k in n.stat) n.attrs[k]=typeof n.stat[k]==='number'?fmt(n.stat[k]):String(n.stat[k]);
-    for (const k in n.tracks){
-      const t=n.tracks[k];
-      n.attrs[k]=fmtVal(t.type,t.at(ip));
-      const segs=trackSegs(t);
-      if (segs.length) n.anims.push({prop:k,type:t.type,segs});
-    }
-    for (const k in DEF) if (n.attrs[k]===DEF[k] && !n.anims.some(a=>a.prop===k)) delete n.attrs[k];
-    n.children.forEach(compileNode);
-  };
-  root.children.forEach(compileNode);
-  /* --- ادغام گروه‌های بی‌اثر --- */
-  (function flat(n){
-    const out=[];
-    for (const c of n.children){
-      if (c.tag==='group'){ flat(c); if (!c.anims.length && Object.keys(c.attrs).length===0){ out.push(...c.children); continue; } }
-      out.push(c);
-    }
-    n.children=out;
-  })(root);
-
-  /* --- ساخت XML با XML DOM مرورگر --- */
-  const doc=document.implementation.createDocument(null,'animated-vector',null);
-  const rootEl=doc.documentElement;
-  const setA=(e,k,v)=>e.setAttributeNS(ANDROID_NS,'android:'+k,String(v));
-  const aaptAttr=name=>{ const e=doc.createElementNS(AAPT_NS,'aapt:attr'); e.setAttribute('name',name); return e; };
-  const dpW=Math.max(1,+opts.dp||W), dpH=dpW*H/W;
-  const drawable=aaptAttr('android:drawable'); rootEl.appendChild(drawable);
-  const vec=doc.createElement('vector'); drawable.appendChild(vec);
-  setA(vec,'width',fmt(dpW)+'dp'); setA(vec,'height',fmt(dpH)+'dp');
-  setA(vec,'viewportWidth',fmt(W)); setA(vec,'viewportHeight',fmt(H));
-  const GA=['name','pivotX','pivotY','rotation','scaleX','scaleY','translateX','translateY'];
-  const PA=['name','pathData','fillColor','fillAlpha','fillType','strokeColor','strokeAlpha','strokeWidth','strokeLineCap','strokeLineJoin','strokeMiterLimit','trimPathStart','trimPathEnd','trimPathOffset'];
-  const stats={groups:0,paths:0,animators:0,targets:0};
-  const targets=[];
-  (function emit(n,parentEl){
-    for (const c of n.children){
-      const e=doc.createElement(c.tag);
-      c.attrs.name=c.name;
-      for (const k of (c.tag==='group'?GA:PA)) if (c.attrs[k]!=null) setA(e,k,c.attrs[k]);
-      parentEl.appendChild(e);
-      if (c.tag==='group') stats.groups++; else stats.paths++;
-      if (c.anims.length) targets.push(c);
-      if (c.tag==='group') emit(c,e);
-    }
-  })(root,vec);
-  let durMs=0;
-  const isLinear=c=>!c||(Math.abs(c.x1-c.y1)<1e-6 && Math.abs(c.x2-c.y2)<1e-6);
-  for (const n of targets){
-    const t=doc.createElement('target'); setA(t,'name',n.name); rootEl.appendChild(t);
-    const aa=aaptAttr('android:animation'); t.appendChild(aa);
-    const set=doc.createElement('set'); setA(set,'ordering','together'); aa.appendChild(set);
-    stats.targets++;
-    for (const an of n.anims) for (const s of an.segs){
-      const startF = s.hold ? s.f1 : s.f0, endF = s.hold ? s.f1 : s.f1;
-      const st=Math.round((startF-ip)/fr*1000), en=Math.round((endF-ip)/fr*1000);
-      const o=doc.createElement('objectAnimator');
-      setA(o,'propertyName',an.prop);
-      if (st>0) setA(o,'startOffset',st);
-      setA(o,'duration',Math.max(0,en-st));
-      setA(o,'valueFrom',fmtVal(an.type,s.v0)); setA(o,'valueTo',fmtVal(an.type,s.v1));
-      setA(o,'valueType',an.type);
-      if (s.hold || isLinear(s.ease)) setA(o,'interpolator','@android:anim/linear_interpolator');
-      else {
-        const ia=aaptAttr('android:interpolator'); const pi=doc.createElement('pathInterpolator');
-        setA(pi,'controlX1',fmt(s.ease.x1)); setA(pi,'controlY1',fmt(s.ease.y1)); setA(pi,'controlX2',fmt(s.ease.x2)); setA(pi,'controlY2',fmt(s.ease.y2));
-        ia.appendChild(pi); o.appendChild(ia);
-      }
-      set.appendChild(o); stats.animators++;
-      durMs=Math.max(durMs,en);
-    }
-  }
-  if (!stats.animators) warn('noAnim');
-
-  const esc=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  function pretty(el,ind){
-    const attrs=Array.from(el.attributes).map(a=>({name:a.name,value:a.value}));
-    if (el===rootEl) attrs.unshift({name:'xmlns:android',value:ANDROID_NS},{name:'xmlns:aapt',value:AAPT_NS});
-    let s=ind+'<'+el.tagName;
-    attrs.forEach((a,i)=>{ s+=(i===0||attrs.length<2?' ':'\n'+ind+'    ')+a.name+'="'+esc(a.value)+'"'; });
-    const kids=Array.from(el.children);
-    if (!kids.length) return s+' />';
-    return s+'>\n'+kids.map(k=>pretty(k,ind+'    ')).join('\n')+'\n'+ind+'</'+el.tagName+'>';
-  }
-  const xml='<?xml version="1.0" encoding="utf-8"?>\n'+pretty(rootEl,'')+'\n';
-  const list=[...warns.values()];
-  if (baked) list.push({msg:fa(baked)+' ویژگی معادل مستقیم در AVD نداشت و با نمونه‌برداری به کی‌فریم‌های خطی تبدیل شد (خروجی همچنان برداری است).', count:1, info:true});
-  return {xml, warnings:list, stats, durMs, W, H, fr, ip, op};
-}
-
-/* ================= شبیه‌ساز AVD ================= */
-const NAMED={
-  linear_interpolator:t=>t,
-  accelerate_decelerate_interpolator:t=>Math.cos((t+1)*Math.PI)/2+0.5,
-  accelerate_interpolator:t=>t*t,
-  decelerate_interpolator:t=>1-(1-t)*(1-t),
-  fast_out_slow_in:makeBezier(0.4,0,0.2,1),
-  linear_out_slow_in:makeBezier(0,0,0.2,1),
-  fast_out_linear_in:makeBezier(0.4,0,1,1)
-};
-function ga(el,n){ let v=el.getAttributeNS(ANDROID_NS,n); if (v==null||v==='') v=el.getAttribute('android:'+n); return v==null||v===''?null:v; }
-const kidsOf=el=>Array.from(el.children);
-const aaptOf=(el,name)=>kidsOf(el).find(c=>c.localName==='attr'&&c.getAttribute('name')===name);
-function parseColor(s){
-  if (!s||s[0]!=='#') return null;
-  let h=s.slice(1);
-  if (h.length===3) h='F'+h; if (h.length===4) h=h.split('').map(c=>c+c).join('');
-  if (h.length===6) h='FF'+h; if (h.length!==8) return null;
-  return [0,2,4,6].map(i=>parseInt(h.slice(i,i+2),16)/255);
-}
-function tokPath(s){ const t=[]; const re=/([MmLlHhVvCcSsQqTtAaZz])|(-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)/g; let m; while ((m=re.exec(s))) t.push(m[1]?m[1]:+m[2]); return t; }
-function parseVal(type,s){
-  if (s==null) return null;
-  if (type==='colorType') return parseColor(s);
-  if (type==='pathType') return {s, t:tokPath(s)};
-  const v=parseFloat(s); return isNaN(v)?null:v;
-}
-function lerpVal(type,a,b,p){
-  if (a==null) return b; if (b==null) return a;
-  if (type==='colorType') return a.map((v,i)=>v+(b[i]-v)*p);
-  if (type==='pathType'){
-    if (a.t.length!==b.t.length) return p<1?a:b;
-    const t=a.t.map((v,i)=>typeof v==='number'&&typeof b.t[i]==='number'? v+(b.t[i]-v)*p : v);
-    return {s:t.join(' '), t};
-  }
-  return a+(b-a)*p;
-}
-function parseInterp(el){
-  const ref=ga(el,'interpolator');
-  if (ref) return NAMED[ref.split('/').pop()] || NAMED.accelerate_decelerate_interpolator;
-  const ia=aaptOf(el,'android:interpolator'); const pi=ia&&kidsOf(ia)[0];
-  if (pi){
-    if (pi.localName==='pathInterpolator'){
-      const x1=ga(pi,'controlX1'), y1=ga(pi,'controlY1'), x2=ga(pi,'controlX2'), y2=ga(pi,'controlY2');
-      if (x1!=null && x2!=null) return makeBezier(+x1,+(y1||0),+x2,+(y2||1));
-      if (x1!=null){ const qx=+x1, qy=+(y1||0); return makeBezier(2/3*qx,2/3*qy,1+2/3*(qx-1),1+2/3*(qy-1)); }
-      const pd=ga(pi,'pathData');
-      if (pd){ const n=(pd.match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi)||[]).map(Number); if (n.length>=8) return makeBezier(n[2],n[3],n[4],n[5]); }
-      return t=>t;
-    }
-    if (pi.localName==='linearInterpolator') return t=>t;
-    if (pi.localName==='accelerateInterpolator') return NAMED.accelerate_interpolator;
-    if (pi.localName==='decelerateInterpolator') return NAMED.decelerate_interpolator;
-  }
-  return NAMED.accelerate_decelerate_interpolator;
-}
-class AVDPlayer{
-  constructor(host){ this.host=host; this.nodes=[]; this.duration=0; }
-  load(xml){
-    const doc=new DOMParser().parseFromString(xml,'application/xml');
-    const pe=doc.getElementsByTagName('parsererror')[0];
-    if (pe) throw new Error('XML قابل خواندن نیست: '+(pe.textContent||'').trim().split('\n')[0]);
-    const root=doc.documentElement;
-    if (root.localName!=='animated-vector') throw new Error('ریشه‌ی XML باید animated-vector باشد.');
-    const dr=aaptOf(root,'android:drawable'); const vec=dr&&kidsOf(dr).find(c=>c.localName==='vector');
-    if (!vec) throw new Error('بخش vector درون‌خطی (aapt:attr با نام android:drawable) پیدا نشد.');
-    const vw=+ga(vec,'viewportWidth')||24, vh=+ga(vec,'viewportHeight')||24;
-    const svg=document.createElementNS(SVG_NS,'svg');
-    svg.setAttribute('viewBox','0 0 '+vw+' '+vh); svg.setAttribute('preserveAspectRatio','xMidYMid meet');
-    if (ga(vec,'alpha')!=null) svg.style.opacity=ga(vec,'alpha');
-    this.nodes=[]; this.duration=0;
-    const byName=new Map();
-    const build=(el,parentSvg)=>{
-      for (const c of kidsOf(el)){
-        if (c.localName!=='group' && c.localName!=='path') continue;
-        const n={tag:c.localName, base:{}, anims:{}, el:document.createElementNS(SVG_NS,c.localName==='group'?'g':'path'), last:{}};
-        for (const a of Array.from(c.attributes)){
-          if (a.name.startsWith('xmlns')) continue;
-          const key=a.name.startsWith('android:')?a.name.slice(8):(a.namespaceURI===ANDROID_NS?a.localName:null);
-          if (key) n.base[key]=a.value;
-        }
-        parentSvg.appendChild(n.el); this.nodes.push(n);
-        if (n.base.name) byName.set(n.base.name,n);
-        if (c.localName==='group') build(c,n.el);
-      }
-    };
-    build(vec,svg);
-    const guess=p=>p==='pathData'?'pathType':(p==='fillColor'||p==='strokeColor')?'colorType':'floatType';
-    const collect=(el,off,n)=>{
-      if (el.localName==='set'){
-        const seq=ga(el,'ordering')==='sequentially'; let t=off, end=off;
-        for (const c of kidsOf(el)){ if (c.localName!=='set'&&c.localName!=='objectAnimator') continue; const e=collect(c,seq?t:off,n); if (seq) t=e; end=Math.max(end,e); }
-        return end;
-      }
-      if (el.localName==='objectAnimator'){
-        const start=off+(+ga(el,'startOffset')||0), dur=ga(el,'duration')!=null?+ga(el,'duration'):300;
-        const prop=ga(el,'propertyName'); if (!prop) return start+dur;
-        const type=ga(el,'valueType')||guess(prop);
-        (n.anims[prop]=n.anims[prop]||[]).push({start,dur,type,from:parseVal(type,ga(el,'valueFrom')),to:parseVal(type,ga(el,'valueTo')),interp:parseInterp(el)});
-        this.duration=Math.max(this.duration,start+dur);
-        return start+dur;
-      }
-      return off;
-    };
-    for (const t of kidsOf(root)){
-      if (t.localName!=='target') continue;
-      const n=byName.get(ga(t,'name')); if (!n) continue;
-      const aa=aaptOf(t,'android:animation'); const first=aa&&kidsOf(aa)[0];
-      if (first) collect(first,0,n);
-    }
-    this.nodes.forEach(n=>{ for (const k in n.anims) n.anims[k].sort((a,b)=>a.start-b.start); });
-    this.host.innerHTML=''; this.host.appendChild(svg);
-    this.render(0);
-  }
-  value(n,prop,ms,type){
-    let v=n.base[prop]!=null?parseVal(type,n.base[prop]):null;
-    const list=n.anims[prop]; if (!list) return v;
-    for (const a of list){
-      if (ms<a.start) break;
-      if (a.dur<=0 || ms>=a.start+a.dur) v=a.to!=null?a.to:v;
-      else v=lerpVal(a.type,a.from!=null?a.from:v,a.to,clamp(a.interp((ms-a.start)/a.dur),-2,3));
-    }
-    return v;
-  }
-  set(n,k,v){ if (n.last[k]!==v){ n.last[k]=v; if (v==null) n.el.removeAttribute(k); else n.el.setAttribute(k,v); } }
-  render(ms){
-    for (const n of this.nodes){
-      const f=(k,d)=>{ const v=this.value(n,k,ms,'floatType'); return v==null||isNaN(v)?d:v; };
-      if (n.tag==='group'){
-        const px=f('pivotX',0), py=f('pivotY',0);
-        this.set(n,'transform','translate('+(f('translateX',0)+px)+' '+(f('translateY',0)+py)+') rotate('+f('rotation',0)+') scale('+f('scaleX',1)+' '+f('scaleY',1)+') translate('+(-px)+' '+(-py)+')');
-        continue;
-      }
-      const d=this.value(n,'pathData',ms,'pathType');
-      this.set(n,'d',d?d.s:null);
-      const fc=this.value(n,'fillColor',ms,'colorType');
-      if (fc){ this.set(n,'fill','rgb('+fc.slice(1).map(v=>Math.round(clamp(v,0,1)*255)).join(',')+')'); this.set(n,'fill-opacity',String(clamp(fc[0]*f('fillAlpha',1),0,1))); }
-      else this.set(n,'fill','none');
-      this.set(n,'fill-rule',n.base.fillType==='evenOdd'?'evenodd':'nonzero');
-      const sc=this.value(n,'strokeColor',ms,'colorType'), sw=f('strokeWidth',0);
-      if (sc && sw>0){
-        this.set(n,'stroke','rgb('+sc.slice(1).map(v=>Math.round(clamp(v,0,1)*255)).join(',')+')');
-        this.set(n,'stroke-opacity',String(clamp(sc[0]*f('strokeAlpha',1),0,1)));
-        this.set(n,'stroke-width',String(sw));
-        this.set(n,'stroke-linecap',n.base.strokeLineCap||'butt');
-        this.set(n,'stroke-linejoin',n.base.strokeLineJoin||'miter');
-        this.set(n,'stroke-miterlimit',n.base.strokeMiterLimit||'4');
-        const ts=f('trimPathStart',0), te=f('trimPathEnd',1), to=f('trimPathOffset',0);
-        if (Math.abs(ts)>1e-6 || Math.abs(te-1)>1e-6 || Math.abs(to)>1e-6){
-          const len=Math.abs(te-ts);
-          if (len<1e-6){ this.set(n,'stroke','none'); }
-          else {
-            const s=(((Math.min(ts,te)+to)%1)+1)%1, e=s+len;
-            this.set(n,'pathLength','1');
-            if (e<=1+1e-6){ this.set(n,'stroke-dasharray',len+' 2'); this.set(n,'stroke-dashoffset',String(-s)); }
-            else { this.set(n,'stroke-dasharray',(e-1)+' '+(s-(e-1))+' '+(1-s)+' 2'); this.set(n,'stroke-dashoffset','0'); }
-          }
-        } else { this.set(n,'pathLength',null); this.set(n,'stroke-dasharray',null); this.set(n,'stroke-dashoffset',null); }
-      } else this.set(n,'stroke','none');
-    }
-  }
-}
-
-/* ================= نمونه‌ی داخلی ================= */
-const E=(xo,yo,xi,yi)=>({o:{x:xo,y:yo},i:{x:xi,y:yi}});
-const TR=()=>({ty:'tr',nm:'Transform',p:{a:0,k:[0,0]},a:{a:0,k:[0,0]},s:{a:0,k:[100,100]},r:{a:0,k:0},o:{a:0,k:100},sk:{a:0,k:0},sa:{a:0,k:0}});
-const KS=extra=>Object.assign({o:{a:0,k:100},r:{a:0,k:0},p:{a:0,k:[100,100,0]},a:{a:0,k:[0,0,0]},s:{a:0,k:[100,100,100]}},extra);
-const diamond={i:[[0,0],[0,0],[0,0],[0,0]],o:[[0,0],[0,0],[0,0],[0,0]],v:[[0,-26],[26,0],[0,26],[-26,0]],c:true};
-const square={i:[[0,0],[0,0],[0,0],[0,0]],o:[[0,0],[0,0],[0,0],[0,0]],v:[[-17,-17],[17,-17],[17,17],[-17,17]],c:true};
-const SAMPLE={v:'5.7.4',fr:30,ip:0,op:60,w:200,h:200,nm:'sample',ddd:0,assets:[],layers:[
-  {ddd:0,ind:1,ty:4,nm:'dot',sr:1,ao:0,ip:0,op:60,st:0,bm:0,
-   ks:KS({p:{a:1,k:[Object.assign({t:0,s:[56,178,0],to:[0,0,0],ti:[0,0,0]},E(0.6,0,0.4,1)),Object.assign({t:30,s:[144,178,0],to:[0,0,0],ti:[0,0,0]},E(0.6,0,0.4,1)),{t:60,s:[56,178,0]}]},
-          s:{a:1,k:[Object.assign({t:0,s:[100,100,100]},E([0.6,0.6,0.6],[0,0,0],[0.4,0.4,0.4],[1,1,1])),Object.assign({t:15,s:[150,150,100]},E([0.6,0.6,0.6],[0,0,0],[0.4,0.4,0.4],[1,1,1])),Object.assign({t:30,s:[100,100,100]},E([0.6,0.6,0.6],[0,0,0],[0.4,0.4,0.4],[1,1,1])),Object.assign({t:45,s:[150,150,100]},E([0.6,0.6,0.6],[0,0,0],[0.4,0.4,0.4],[1,1,1])),{t:60,s:[100,100,100]}]}}),
-   shapes:[{ty:'gr',nm:'dot',it:[{ty:'el',nm:'Ellipse',d:1,p:{a:0,k:[0,0]},s:{a:0,k:[16,16]}},{ty:'fl',nm:'Fill',c:{a:0,k:[0.12,0.62,0.42,1]},o:{a:0,k:100},r:1},TR()]}]},
-  {ddd:0,ind:2,ty:4,nm:'morph',sr:1,ao:0,ip:0,op:60,st:0,bm:0,ks:KS({}),
-   shapes:[{ty:'gr',nm:'morph',it:[
-     {ty:'sh',nm:'Path',ks:{a:1,k:[Object.assign({t:0,s:[diamond]},E(0.5,0,0.3,1)),Object.assign({t:30,s:[square]},E(0.5,0,0.3,1)),{t:60,s:[diamond]}]}},
-     {ty:'fl',nm:'Fill',c:{a:1,k:[Object.assign({t:0,s:[0.36,0.27,0.91,1]},E([0.5],[0],[0.5],[1])),Object.assign({t:30,s:[0.96,0.45,0.27,1]},E([0.5],[0],[0.5],[1])),{t:60,s:[0.36,0.27,0.91,1]}]},o:{a:0,k:100},r:1},TR()]}]},
-  {ddd:0,ind:3,ty:4,nm:'ring',sr:1,ao:0,ip:0,op:60,st:0,bm:0,
-   ks:KS({r:{a:1,k:[Object.assign({t:0,s:[0]},E([0.6],[0],[0.4],[1])),{t:60,s:[180]}]}}),
-   shapes:[{ty:'gr',nm:'ring',it:[
-     {ty:'rc',nm:'Rect',d:1,p:{a:0,k:[0,0]},s:{a:0,k:[118,118]},r:{a:0,k:22}},
-     {ty:'tm',nm:'Trim',s:{a:0,k:0},e:{a:1,k:[Object.assign({t:0,s:[12]},E([0.6],[0],[0.4],[1])),Object.assign({t:30,s:[88]},E([0.6],[0],[0.4],[1])),{t:60,s:[12]}]},o:{a:1,k:[Object.assign({t:0,s:[0]},E([0.3],[0.3],[0.7],[0.7])),{t:60,s:[360]}]},m:1},
-     {ty:'st',nm:'Stroke',c:{a:0,k:[0.15,0.2,0.27,1]},o:{a:0,k:100},w:{a:0,k:9},lc:2,lj:2},TR()]}]}
-]};
-
-/* ================= رابط کاربری ================= */
-const state={json:null,res:null,frame:0,total:0,fr:30,ip:0,playing:false,speed:1,loop:true,anim:null,last:0,xml:''};
-const player=new AVDPlayer($('#avdBox'));
-const overlayPlayer=new AVDPlayer($('#overlayBox'));
-const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),1800); }
-function showErr(m){ const e=$('#err'); if (!m){ e.classList.add('hidden'); return; } e.textContent=m; e.classList.remove('hidden'); }
-function resName(){ let n=($('#resName').value||'').toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,''); if (!/^[a-z]/.test(n)) n='avd_'+n; return n||'avd_animation'; }
-function updateHowto(){
-  const n=resName(); $('#fnameInl').textContent=n+'.xml';
-  $('#kotlin').textContent=
-`val avd = AnimatedVectorDrawableCompat.create(context, R.drawable.${n})!!
-imageView.setImageDrawable(avd)
-avd.registerAnimationCallback(object : Animatable2Compat.AnimationCallback() {
-    override fun onAnimationEnd(drawable: Drawable?) {
-        imageView.post { avd.start() }   // تکرار پیوسته
-    }
-})
-avd.start()`;
-}
-function setPlaying(p){ state.playing=p; const b=$('#play'); b.textContent=p?'توقف':'پخش'; b.setAttribute('aria-label',p?'توقف':'پخش'); state.last=0; }
-function chips(r){
-  const sz=new Blob([r.xml]).size;
-  const items=[['ابعاد',fa(r.W)+'×'+fa(r.H)],['فریم‌ریت',fa(r.fr)],['مدت',fa(Math.round((r.op-r.ip)/r.fr*100)/100)+' ثانیه'],['مسیر',fa(r.stats.paths)],['گروه',fa(r.stats.groups)],['انیماتور',fa(r.stats.animators)],['حجم XML',sz>1024?fa(Math.round(sz/102.4)/10)+' کیلوبایت':fa(sz)+' بایت']];
-  $('#meta').innerHTML=items.map(([k,v])=>'<span class="chip">'+k+': <b>'+v+'</b></span>').join('');
-}
-function showWarns(list){
-  const ul=$('#warns'); ul.innerHTML='';
-  list.forEach(w=>{ const li=document.createElement('li'); if (w.info) li.className='info'; li.textContent=w.msg; if (w.count>1){ const s=document.createElement('span'); s.className='n'; s.textContent='('+fa(w.count)+' مورد)'; li.appendChild(s);} ul.appendChild(li); });
-  $('#warnPanel').classList.toggle('hidden',!list.length);
-}
-function loadPreview(xml){
-  try{ player.load(xml); overlayPlayer.load(xml); $('#emptyA').classList.add('hidden'); return true; }
-  catch(e){ showErr(e.message); return false; }
-}
-function runConvert(){
-  if (!state.json) return;
-  PREC=+$('#prec').value;
-  showErr(null);
-  try{
-    const r=convert(state.json,{dp:+$('#dp').value, step:+$('#step').value});
-    state.res=r; state.xml=r.xml;
-    $('#xml').value=r.xml;
-    chips(r); showWarns(r.warnings);
-    loadPreview(r.xml);
-    ['#copy','#dl','#apply'].forEach(s=>$(s).disabled=false);
-    draw();
-  }catch(e){ console.error(e); showErr(e.message||String(e)); }
-}
-function buildLottie(){
-  if (state.anim){ try{ state.anim.destroy(); }catch(e){} state.anim=null; }
-  const box=$('#lottieBox'); box.innerHTML='';
-  if (!window.lottie){ $('#emptyL').textContent='کتابخانه‌ی lottie-web بارگذاری نشد. اتصال اینترنت را بررسی کنید.'; $('#emptyL').classList.remove('hidden'); return; }
-  try{
-    state.anim=lottie.loadAnimation({container:box,renderer:'svg',loop:false,autoplay:false,animationData:JSON.parse(JSON.stringify(state.json)),rendererSettings:{preserveAspectRatio:'xMidYMid meet'}});
-    state.anim.addEventListener('DOMLoaded',draw);
-    $('#emptyL').classList.add('hidden');
-  }catch(e){ $('#emptyL').textContent='lottie-web نتوانست این فایل را پخش کند.'; $('#emptyL').classList.remove('hidden'); }
-}
-function loadJson(json,name){
-  if (!json || !Array.isArray(json.layers) || !json.w || !json.h){ showErr('این فایل یک انیمیشن Lottie معتبر نیست. فیلدهای w، h و layers پیدا نشدند.'); return; }
-  state.json=json; state.fr=json.fr||30; state.ip=json.ip||0; state.total=Math.max(1,(json.op!=null?json.op:state.ip+state.fr)-state.ip); state.frame=0;
-  document.documentElement.style.setProperty('--ar', json.w+' / '+json.h);
-  if (name){ const base=name.replace(/\.json$/i,''); $('#resName').value=resName.call(null,$('#resName').value=base); }
-  updateHowto();
-  $('#scrub').max=String(state.total);
-  buildLottie(); runConvert();
-  setPlaying(!reduce);
-}
-function draw(){
-  const f=clamp(state.frame,0,state.total);
-  if (state.anim){ try{ state.anim.goToAndStop(Math.min(f,state.total-0.001),true); }catch(e){} }
-  const ms=f/state.fr*1000;
-  player.render(ms); if (!$('#stages').classList.contains('hidden')) overlayPlayer.render(ms);
-  $('#scrub').value=String(f);
-  $('#frameLbl').textContent='فریم '+fa(Math.floor(f+state.ip))+' از '+fa(state.total+state.ip);
-}
-function tick(ts){
-  if (state.playing && state.json){
-    const dt=state.last?(ts-state.last)/1000:0; state.last=ts;
-    state.frame+=dt*state.fr*state.speed;
-    if (state.frame>=state.total){ if (state.loop) state.frame%=state.total; else { state.frame=state.total; setPlaying(false); } }
-    draw();
-  }
-  requestAnimationFrame(tick);
-}
-requestAnimationFrame(tick);
-
-/* --- رویدادها --- */
-function readFile(file){
-  if (!file) return;
-  const r=new FileReader();
-  r.onload=()=>{
-    const txt=String(r.result||'');
-    if (txt.startsWith('PK')){ showErr('فایل‌های .lottie (فشرده) هنوز پشتیبانی نمی‌شوند. لطفاً فایل JSON را انتخاب کنید.'); return; }
-    try{ loadJson(JSON.parse(txt),file.name); }catch(e){ showErr('فایل JSON قابل خواندن نیست: '+e.message); }
-  };
-  r.readAsText(file);
-}
-$('#file').addEventListener('change',e=>{ readFile(e.target.files[0]); e.target.value=''; });
-const drop=$('#drop');
-['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.add('over'); }));
-['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.remove('over'); }));
-drop.addEventListener('drop',e=>{ const f=e.dataTransfer&&e.dataTransfer.files[0]; readFile(f); });
-$('#sample').addEventListener('click',()=>loadJson(JSON.parse(JSON.stringify(SAMPLE)),'avd_sample.json'));
-['#dp','#prec','#step'].forEach(s=>$(s).addEventListener('change',runConvert));
-$('#resName').addEventListener('input',updateHowto);
-$('#play').addEventListener('click',()=>{ if (!state.json) return; if (!state.playing && state.frame>=state.total) state.frame=0; setPlaying(!state.playing); });
-$('#scrub').addEventListener('input',e=>{ setPlaying(false); state.frame=+e.target.value; draw(); });
-$('#speed').addEventListener('change',e=>{ state.speed=+e.target.value; });
-$('#loop').addEventListener('change',e=>{ state.loop=e.target.checked; });
-function setMode(over){
-  $('#stages').classList.toggle('overlay',over);
-  $('#mSide').setAttribute('aria-pressed',String(!over)); $('#mOver').setAttribute('aria-pressed',String(over));
-  $('#overNote').classList.toggle('hidden',!over);
-  $('#capL').textContent=over?'Lottie و AVD روی هم':'Lottie (مرجع)';
-  draw();
-}
-$('#mSide').addEventListener('click',()=>setMode(false));
-$('#mOver').addEventListener('click',()=>setMode(true));
-$('#apply').addEventListener('click',()=>{ showErr(null); if (loadPreview($('#xml').value)){ state.xml=$('#xml').value; draw(); toast('پیش‌نمایش به‌روز شد'); } });
-$('#copy').addEventListener('click',async()=>{
-  const t=$('#xml').value;
-  try{ await navigator.clipboard.writeText(t); toast('XML کپی شد'); }
-  catch(e){ const ta=$('#xml'); ta.focus(); ta.select(); try{ document.execCommand('copy'); toast('XML کپی شد'); }catch(_){ toast('کپی انجام نشد؛ متن را دستی انتخاب کنید'); } }
-});
-
-/* --- دانلود: فایل zip شامل res/drawable/<name>.xml --- */
-const CRC=(()=>{ const t=new Uint32Array(256); for (let n=0;n<256;n++){ let c=n; for (let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
-function crc32(b){ let c=0xFFFFFFFF; for (let i=0;i<b.length;i++) c=CRC[(c^b[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
-function makeZip(files){
-  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
-  const d=new Date(), dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(), tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
-  for (const f of files){
-    const name=enc.encode(f.name), data=enc.encode(f.data), crc=crc32(data);
-    const h=new DataView(new ArrayBuffer(30));
-    h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0x0800,true); h.setUint16(8,0,true);
-    h.setUint16(10,tm,true); h.setUint16(12,dt,true); h.setUint32(14,crc,true); h.setUint32(18,data.length,true); h.setUint32(22,data.length,true);
-    h.setUint16(26,name.length,true); h.setUint16(28,0,true);
-    parts.push(h.buffer,name,data);
-    const c=new DataView(new ArrayBuffer(46));
-    c.setUint32(0,0x02014b50,true); c.setUint16(4,20,true); c.setUint16(6,20,true); c.setUint16(8,0x0800,true); c.setUint16(10,0,true);
-    c.setUint16(12,tm,true); c.setUint16(14,dt,true); c.setUint32(16,crc,true); c.setUint32(20,data.length,true); c.setUint32(24,data.length,true);
-    c.setUint16(28,name.length,true); c.setUint32(42,off,true);
-    central.push(c.buffer,name);
-    off+=30+name.length+data.length;
-  }
-  const cdSize=central.reduce((s,p)=>s+(p.byteLength||p.length),0);
-  const e=new DataView(new ArrayBuffer(22));
-  e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true); e.setUint32(12,cdSize,true); e.setUint32(16,off,true);
-  return new Blob([...parts,...central,e.buffer]);
-}
-let downloads=null;
-(async()=>{
-  try{ if (window.claude && typeof window.claude.use==='function') downloads=await window.claude.use('downloads'); }catch(e){ downloads=null; }
-  if (downloads){ const b=$('#dl'); b.textContent='دانلود (zip)'; b.classList.remove('hidden'); }
-})();
-$('#dl').addEventListener('click',async()=>{
-  if (!downloads) return;
-  const n=resName();
-  const blob=makeZip([{name:'res/drawable/'+n+'.xml', data:$('#xml').value}]);
-  try{ await downloads.save({filename:n+'.zip', data:blob}); toast('فایل ذخیره شد'); }
-  catch(e){
-    const code=e&&e.code;
-    if (code==='declined') return;
-    if (code==='rate_limited') toast('یک درخواست ذخیره باز است؛ کمی بعد دوباره امتحان کنید');
-    else { toast('دانلود در این نما در دسترس نیست؛ از کپی استفاده کنید'); $('#dl').classList.add('hidden'); }
-  }
-});
-updateHowto();
-})();
-</script>
 </body>
 </html>
