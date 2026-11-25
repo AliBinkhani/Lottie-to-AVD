@@ -11,7 +11,8 @@ Everything runs locally in the browser. No files are uploaded anywhere.
 ## Features
 
 - **Conversion**: shape, solid and precomp layers, parenting, groups, transforms (position, rotation,
-  scale, anchor point), fills and strokes, Trim Paths, and ellipse / rectangle / star shapes.
+  scale, anchor point), fills and strokes, linear and radial gradients, Trim Paths, and ellipse /
+  rectangle / star shapes.
 - **Faithful timing**: keyframes become `objectAnimator`s, and Lottie easing curves become
   `pathInterpolator`s. Properties with no direct AVD equivalent are sampled and simplified into
   linear keyframes, so the output stays fully vector.
@@ -58,6 +59,13 @@ avd.registerAnimationCallback(object : Animatable2Compat.AnimationCallback() {
 avd.start()
 ```
 
+### Gradients and minimum SDK
+
+Gradients are written as inline `<gradient>` elements inside `fillColor` / `strokeColor`. They need
+Android 7.0 (API 24) or newer, or `AnimatedVectorDrawableCompat`. The **Support gradients (requires
+API 24+)** option is on by default. Turn it off when targeting older platform drawables, and each
+gradient is replaced with its first colour.
+
 ## Limitations
 
 These Lottie features have no AVD equivalent. They are skipped or approximated, and the conversion
@@ -67,7 +75,9 @@ report lists any that were found:
 | --- | --- |
 | Masks, track mattes | Ignored; the layer is drawn unmasked |
 | Text and image layers | Skipped (convert text to shapes in After Effects) |
-| Gradients | Replaced with their first colour |
+| Animated gradients | Converted using their first frame (AVDs cannot animate gradients) |
+| Radial gradient highlight | Ignored; the gradient stays centred |
+| Gradients with *Support gradients* turned off | Replaced with their first colour |
 | Dashes | Drawn as a solid stroke |
 | Merge Paths, Repeater, Round Corners, Twist, Pucker/Bloat, Zig Zag, Offset Path | Ignored |
 | 3D layers, skew, time remapping, layer effects | Ignored |
@@ -81,7 +91,8 @@ report lists any that were found:
 .
 ├── index.html                  # Page markup (text comes from i18n keys)
 ├── samples/
-│   └── sample.json             # Built-in demo animation
+│   ├── sample.json             # Demo: basic shapes, morph, trim path
+│   └── gradient.json           # Demo: linear/radial gradient fills and strokes
 ├── src/
 │   ├── css/
 │   │   ├── fonts.css           # Self-hosted @font-face rules
@@ -92,7 +103,8 @@ report lists any that were found:
 │       │   └── format.js       # Number/colour formatting for XML
 │       ├── lottie/
 │       │   ├── properties.js   # Keyframe evaluation of Lottie properties
-│       │   └── geometry.js     # Shapes → path data
+│       │   ├── geometry.js     # Shapes → path data
+│       │   └── gradient.js     # Gradient stops, start/end points
 │       ├── converter/
 │       │   ├── tracks.js       # Property tracks over time
 │       │   ├── converter.js    # Lottie → scene → animators (entry point)

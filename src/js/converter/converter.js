@@ -14,6 +14,7 @@
 import { fmt, fmtVal, setPrecision, getPrecision } from '../core/format.js';
 import { isAnim, nv, getSegs, segEase, propAt } from '../lottie/properties.js';
 import { shapeToD, geomD } from '../lottie/geometry.js';
+import { gradientAt, isGradientAnimated, hasHighlight, firstGradientColor } from '../lottie/gradient.js';
 import { mapT, unmap, constTrack, numTrack, offsetTrack, prodTrack, colorTrack } from './tracks.js';
 import { writeXml } from './xml-writer.js';
 
@@ -56,7 +57,8 @@ const DEFAULTS = {
 
 /**
  * @param {object} json  Lottie animation
- * @param {{dp?:number, step?:number, precision?:number}} opts
+ * @param {{dp?:number, step?:number, precision?:number, gradients?:boolean}} opts
+ *   gradients: emit real <gradient>s (needs API 24+); otherwise use the first colour
  */
 export function convert(json, opts = {}) {
   if (!isLottie(json)) throw new ConversionError('invalidLottie');
@@ -65,6 +67,7 @@ export function convert(json, opts = {}) {
   const W = json.w, H = json.h, fr = json.fr || 30, ip = json.ip || 0;
   const op = json.op != null ? json.op : ip + fr;
   const step = Math.max(1, opts.step || 1);
+  const gradients = opts.gradients !== false;
 
   const warns = new Map();
   const warn = (key, params) => {
@@ -180,16 +183,6 @@ export function convert(json, opts = {}) {
     return { type: 'pathType', animated: true, at: f => geomD(item, unmap(map, f)), exact: () => null };
   }
 
-  function firstGradColor(st) {
-    try {
-      const gp = st.g && st.g.k;
-      const arr = isAnim(gp) ? nv(gp.k[0].s) : gp.k;
-      return [arr[1], arr[2], arr[3]];
-    } catch (e) {
-      return [0.5, 0.5, 0.5];
-    }
-  }
-
   /** Collects geometry items that a style at index `upto` applies to. */
   function collectGeoms(list, upto, chain, out) {
     for (let j = 0; j < upto; j++) {
@@ -215,14 +208,27 @@ export function convert(json, opts = {}) {
     p.tracks.pathData = geomTrack(g.geom, ctx.map);
     const alpha = prodTrack(ctx.alpha.concat([numTrack(style.o, ctx.map, 0, 'num', v => v / 100, 100)]));
     const isFill = style.ty === 'fl' || style.ty === 'gf';
-    if (style.ty === 'gf' || style.ty === 'gs') warn('gradient');
+    const isGradient = style.ty === 'gf' || style.ty === 'gs';
+    const colorAttr = isFill ? 'fillColor' : 'strokeColor';
+
+    if (isGradient && gradients) {
+      // Static gradient (API 24+). Animated gradients use their first frame.
+      if (isGradientAnimated(style)) warn('gradientAnim');
+      if (hasHighlight(style)) warn('gradientHighlight');
+      const spec = gradientAt(style, unmap(ctx.map, ip));
+      if (spec.stops.length) p.gradient = { attr: colorAttr, spec };
+      else p.tracks[colorAttr] = constTrack([0.5, 0.5, 0.5], 'colorType');
+    } else if (isGradient) {
+      warn('gradient');
+      p.tracks[colorAttr] = constTrack(firstGradientColor(style), 'colorType');
+    } else {
+      p.tracks[colorAttr] = colorTrack(style.c, ctx.map);
+    }
 
     if (isFill) {
-      p.tracks.fillColor = style.ty === 'fl' ? colorTrack(style.c, ctx.map) : constTrack(firstGradColor(style), 'colorType');
       p.tracks.fillAlpha = alpha;
       if (style.r === 2) p.stat.fillType = 'evenOdd';
     } else {
-      p.tracks.strokeColor = style.ty === 'st' ? colorTrack(style.c, ctx.map) : constTrack(firstGradColor(style), 'colorType');
       p.tracks.strokeAlpha = alpha;
       p.tracks.strokeWidth = numTrack(style.w, ctx.map, 0, 'num', null, 1);
       p.stat.strokeLineCap = ({ 1: 'butt', 2: 'round', 3: 'square' })[style.lc] || 'butt';

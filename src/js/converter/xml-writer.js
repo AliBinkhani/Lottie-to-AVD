@@ -1,5 +1,6 @@
 /** Serialises a compiled scene into AnimatedVectorDrawable XML. */
 import { fmt, fmtVal } from '../core/format.js';
+import { clamp } from '../core/math.js';
 
 export const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
 export const AAPT_NS = 'http://schemas.android.com/aapt';
@@ -7,6 +8,12 @@ export const AAPT_NS = 'http://schemas.android.com/aapt';
 const GROUP_ATTRS = ['name', 'pivotX', 'pivotY', 'rotation', 'scaleX', 'scaleY', 'translateX', 'translateY'];
 const PATH_ATTRS = ['name', 'pathData', 'fillColor', 'fillAlpha', 'fillType', 'strokeColor', 'strokeAlpha',
   'strokeWidth', 'strokeLineCap', 'strokeLineJoin', 'strokeMiterLimit', 'trimPathStart', 'trimPathEnd', 'trimPathOffset'];
+
+/** #AARRGGBB for a gradient stop. */
+function argbHex(rgb, alpha) {
+  const h = v => Math.round(clamp(v || 0, 0, 1) * 255).toString(16).padStart(2, '0').toUpperCase();
+  return '#' + h(alpha) + h(rgb[0]) + h(rgb[1]) + h(rgb[2]);
+}
 
 const isLinear = c => !c || (Math.abs(c.x1 - c.y1) < 1e-6 && Math.abs(c.x2 - c.y2) < 1e-6);
 const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -36,13 +43,47 @@ export function writeXml(root, { W, H, fr, ip, dp }) {
   setA(vec, 'viewportWidth', fmt(W));
   setA(vec, 'viewportHeight', fmt(H));
 
-  const stats = { groups: 0, paths: 0, animators: 0, targets: 0 };
+  const stats = { groups: 0, paths: 0, animators: 0, targets: 0, gradients: 0 };
+
+  /** <aapt:attr name="android:fillColor|strokeColor"><gradient …/></aapt:attr> */
+  function gradientEl({ attr, spec }) {
+    const wrap = aaptAttr('android:' + attr);
+    const g = doc.createElement('gradient');
+    setA(g, 'type', spec.type);
+    if (spec.type === 'radial') {
+      setA(g, 'centerX', fmt(spec.start[0]));
+      setA(g, 'centerY', fmt(spec.start[1]));
+      setA(g, 'gradientRadius', fmt(Math.max(spec.radius, 1e-3)));
+    } else {
+      setA(g, 'startX', fmt(spec.start[0]));
+      setA(g, 'startY', fmt(spec.start[1]));
+      setA(g, 'endX', fmt(spec.end[0]));
+      setA(g, 'endY', fmt(spec.end[1]));
+    }
+    setA(g, 'tileMode', 'clamp');
+    // Android needs at least two stops.
+    const stops = spec.stops.length === 1
+      ? [Object.assign({}, spec.stops[0], { offset: 0 }), Object.assign({}, spec.stops[0], { offset: 1 })]
+      : spec.stops;
+    for (const st of stops) {
+      const item = doc.createElement('item');
+      setA(item, 'offset', fmt(st.offset));
+      setA(item, 'color', argbHex(st.color, st.alpha));
+      g.appendChild(item);
+    }
+    wrap.appendChild(g);
+    return wrap;
+  }
   const targets = [];
   (function emit(n, parentEl) {
     for (const c of n.children) {
       const e = doc.createElement(c.tag);
       c.attrs.name = c.name;
       for (const k of (c.tag === 'group' ? GROUP_ATTRS : PATH_ATTRS)) if (c.attrs[k] != null) setA(e, k, c.attrs[k]);
+      if (c.gradient) {
+        e.appendChild(gradientEl(c.gradient));
+        stats.gradients++;
+      }
       parentEl.appendChild(e);
       if (c.tag === 'group') stats.groups++; else stats.paths++;
       if (c.anims.length) targets.push(c);
