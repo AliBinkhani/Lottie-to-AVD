@@ -108,3 +108,13 @@ code.inl{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padd
 .lang-switch{flex:none}
 .label-btn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .opt-check{margin-top:12px;font-weight:600}
+
+/* Input actions: file picker on top, sample picker + button below */
+.drop-actions{display:flex;flex-direction:column;gap:8px;flex:0 1 auto}
+.drop-actions .label-btn{justify-content:center}
+.sample-row{display:flex;gap:8px}
+.sample-row select{flex:1 1 auto;min-width:0}
+.sample-row button{flex:none}
+@media (max-width:560px){
+  .drop-actions{flex:1 1 100%}
+}

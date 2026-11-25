@@ -26,16 +26,18 @@
     <h2 id="h-in" data-i18n="input.heading"></h2>
     <div class="drop" id="drop">
       <p data-i18n-html="input.drop"></p>
-      <div class="row">
+      <div class="drop-actions">
         <label class="btn label-btn">
           <span data-i18n="input.choose"></span>
           <input type="file" id="file" accept=".json,application/json" class="hidden">
         </label>
-        <select id="sampleSel" data-i18n-attr="aria-label:input.sampleLabel">
-          <option value="sample.json" data-i18n="input.sampleBasic"></option>
-          <option value="gradient.json" data-i18n="input.sampleGradient"></option>
-        </select>
-        <button id="sample" type="button" data-i18n="input.sample"></button>
+        <div class="sample-row">
+          <select id="sampleSel" data-i18n-attr="aria-label:input.sampleLabel">
+            <option value="sample.json" data-i18n="input.sampleBasic"></option>
+            <option value="gradient.json" data-i18n="input.sampleGradient"></option>
+          </select>
+          <button id="sample" type="button" data-i18n="input.sample"></button>
+        </div>
       </div>
     </div>
     <details class="opts">
