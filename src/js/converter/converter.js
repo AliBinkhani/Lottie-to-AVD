@@ -291,6 +291,23 @@ export function convert(json, opts = {}) {
     return host;
   }
 
+  /**
+   * Group for a *parent* layer's transform. Consecutive layers with the same
+   * parent share it (it is reused only while it is still the last thing drawn
+   * in `host`, so the stacking order is unchanged). This avoids repeating the
+   * parent's animators for every child.
+   */
+  function parentGroup(host, layer, map) {
+    const last = host.children[host.children.length - 1];
+    if (last && last.parentOf === layer && last.parentMap === map) return last.inner;
+    const inner = addTransform(host, layer.ks, map, layer.nm || 'layer');
+    const outer = host.children[host.children.length - 1];
+    outer.parentOf = layer;
+    outer.parentMap = map;
+    outer.inner = inner;
+    return inner;
+  }
+
   /** Size of the "everything" rectangle used for inverted clips. */
   const clipBound = 10 * Math.max(W, H) + 10000;
 
@@ -329,7 +346,10 @@ export function convert(json, opts = {}) {
 
       const chain = parentChain(L);
       const lm = ctx.map;
-      const alpha = ctx.alpha.concat([numTrack(L.ks && L.ks.o, lm, 0, 'num', v => v / 100, 100), vis]);
+      const alpha = ctx.alpha.concat([numTrack(L.ks && L.ks.o, lm, 0, 'num', v => v / 100, 100)]);
+      // In/out points hide the whole layer: one scaleX 0/1 group instead of
+      // repeating the jumps on every path's alpha (nothing is drawn at scale 0).
+      const shown = [vis];
       let host = parent;
       let start = 0;
 
@@ -352,17 +372,25 @@ export function convert(json, opts = {}) {
             if (L.tt === 3 || L.tt === 4) warn('matteLuma');
             if (res.flags.soft) warn('matteSoft');
             if (res.flags.multitrim) warn('multitrim');
-            for (; start < k; start++) host = addTransform(host, chain[start].ks, ctx.map, chain[start].nm || 'layer');
+            for (; start < k; start++) host = parentGroup(host, chain[start], ctx.map);
             const wrap = node('group', uname((L.nm || 'layer') + '_matte'));
             host.children.push(wrap);
             host = addClips(wrap, [res.track], matte.nm || 'matte');
             // Outside the matte's in/out range an alpha matte hides the layer.
-            if (!inverted) alpha.push(visTrack(matte, ctx.map));
+            if (!inverted) shown.push(visTrack(matte, ctx.map));
           }
         }
       }
 
-      for (; start < chain.length; start++) host = addTransform(host, chain[start].ks, ctx.map, chain[start].nm || 'layer');
+      for (; start < chain.length - 1; start++) host = parentGroup(host, chain[start], ctx.map);
+      const showTrack = prodTrack(shown);
+      if (showTrack.animated) {
+        const g = node('group', uname((L.nm || 'layer') + '_visibility'));
+        g.tracks.scaleX = showTrack;
+        host.children.push(g);
+        host = g;
+      }
+      host = addTransform(host, L.ks, ctx.map, L.nm || 'layer');
 
       // Masks: clip in the layer's own space.
       if (L.masksProperties && L.masksProperties.length) {
@@ -403,29 +431,32 @@ export function convert(json, opts = {}) {
   /* ---------- track compilation ---------- */
 
   const eqTol = type => (type === 'colorType' ? 1 / 512 : Math.max(Math.pow(10, -getPrecision()) / 2, 1e-6));
+  // Properties measured in drawing units can be simplified with a tolerance
+  // relative to the drawing size (1/2000 of it, far below a device pixel).
+  const SPATIAL = { translateX: 1, translateY: 1, pivotX: 1, pivotY: 1, pathData: 1, strokeWidth: 1 };
+  const spatialTol = Math.max(W, H) / 2000;
+  const tolFor = (type, prop) => (SPATIAL[prop] ? Math.max(eqTol(type), spatialTol) : eqTol(type));
   let baked = 0;
 
   /** Samples a track and simplifies it into linear segments. */
-  function bake(track) {
+  /** Samples a track and simplifies it into linear segments within `eps`. */
+  function bake(track, eps) {
     const fs = [];
     for (let f = ip; f < op - 1e-9; f += step) fs.push(f);
     fs.push(op);
     const raw = fs.map(f => track.at(f));
 
+    let vec;
     if (track.type === 'pathType') {
+      // Paths interpolate only between identical command structures.
       const sig = s => s.replace(/-?\d*\.?\d+(e[-+]?\d+)?/gi, '#');
-      const segs = [];
       const s0 = sig(raw[0]);
-      for (let i = 0; i < raw.length - 1; i++) {
-        if (raw[i] === raw[i + 1]) continue;
-        if (sig(raw[i + 1]) !== s0) { warn('morph'); return []; }
-        segs.push({ f0: fs[i], f1: fs[i + 1], v0: raw[i], v1: raw[i + 1], ease: null });
-      }
-      return segs;
+      if (raw.some(r => sig(r) !== s0)) { warn('morph'); return []; }
+      vec = raw.map(r => (r.match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number));
+    } else {
+      vec = raw.map(v => (Array.isArray(v) ? v : [v]));
     }
 
-    const vec = raw.map(v => (Array.isArray(v) ? v : [v]));
-    const eps = eqTol(track.type);
     const segs = [];
     let s = 0;
     while (s < fs.length - 1) {
@@ -451,7 +482,7 @@ export function convert(json, opts = {}) {
     return segs;
   }
 
-  function trackSegs(track) {
+  function trackSegs(track, prop) {
     if (!track.animated) return [];
     const segs = track.exact();
     if (segs) {
@@ -470,7 +501,7 @@ export function convert(json, opts = {}) {
       if (ok) return out;
     }
     baked++;
-    return bake(track);
+    return bake(track, tolFor(track.type, prop));
   }
 
   function compileNode(n) {
@@ -480,7 +511,7 @@ export function convert(json, opts = {}) {
     for (const k in n.tracks) {
       const t = n.tracks[k];
       n.attrs[k] = fmtVal(t.type, t.at(ip));
-      const segs = trackSegs(t);
+      const segs = trackSegs(t, k);
       if (segs.length) n.anims.push({ prop: k, type: t.type, segs });
     }
     for (const k in DEFAULTS) {

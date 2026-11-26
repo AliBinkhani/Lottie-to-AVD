@@ -16,6 +16,9 @@ Everything runs locally in the browser. No files are uploaded anywhere.
 - **Faithful timing**: keyframes become `objectAnimator`s, and Lottie easing curves become
   `pathInterpolator`s. Properties with no direct AVD equivalent are sampled and simplified into
   linear keyframes, so the output stays fully vector.
+- **Compact output**: exact animators wherever possible (straight motion paths, step changes such
+  as layer in/out points), shared parent groups, one visibility toggle per layer, and sampled
+  properties simplified with a sub-pixel tolerance.
 - **Live comparison**: the original Lottie (via lottie-web) and the generated AVD (via a built-in
   emulator) play side by side or overlaid with a difference blend.
 - **Conversion report**: lists unsupported features (masks, mattes, text, images, gradients,

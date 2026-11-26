@@ -59,21 +59,48 @@ export function offsetTrack(t, k) {
   };
 }
 
-/** Product of several float tracks (used for nested opacities). */
+/**
+ * Product of several float tracks (nested opacities, visibility).
+ *
+ * Exact when at most one factor changes smoothly and every other animated
+ * factor only jumps (holds, e.g. layer in/out points), as long as no jump
+ * falls inside one of the smooth factor's keyframe segments.
+ */
 export function prodTrack(tracks) {
   tracks = tracks.filter(Boolean);
   const anim = tracks.filter(t => t.animated);
+  const at = f => tracks.reduce((m, t) => m * t.at(f), 1);
   return {
     type: 'floatType',
     animated: anim.length > 0,
-    at: f => tracks.reduce((m, t) => m * t.at(f), 1),
+    at,
     exact() {
       if (!anim.length) return [];
-      if (anim.length > 1) return null;
-      const ex = anim[0].exact();
-      if (!ex) return null;
-      const k = tracks.filter(t => !t.animated).reduce((m, t) => m * t.at(0), 1);
-      return ex.map(s => Object.assign({}, s, { v0: s.v0 * k, v1: s.v1 * k }));
+      const ex = anim.map(t => t.exact());
+      if (ex.some(e => !e)) return null;
+      const isJump = s => s.hold || s.f1 <= s.f0;
+      const smoothIdx = ex.map((e, i) => (e.some(s => !isJump(s)) ? i : -1)).filter(i => i >= 0);
+      if (smoothIdx.length > 1) return null;
+
+      const jumps = [];
+      ex.forEach((e, i) => { if (i !== smoothIdx[0]) e.forEach(s => jumps.push(s.f1)); });
+      const smooth = smoothIdx.length ? ex[smoothIdx[0]] : [];
+      const smoothTrack = smoothIdx.length ? anim[smoothIdx[0]] : null;
+      if (jumps.some(h => smooth.some(s => !isJump(s) && h > s.f0 + 1e-6 && h < s.f1 - 1e-6))) return null;
+
+      // Values just before / after a jump (wider than the visibility tolerance).
+      const EPS = 1e-3;
+      // Product of every factor except the smooth one.
+      const others = f => tracks.reduce((m, t) => (t === smoothTrack ? m : m * t.at(f)), 1);
+      const out = smooth.map(s => {
+        if (isJump(s)) return Object.assign({}, s, { v0: s.v0 * others(s.f1 - EPS), v1: s.v1 * others(s.f1 + EPS) });
+        const k = others((s.f0 + s.f1) / 2);
+        return Object.assign({}, s, { v0: s.v0 * k, v1: s.v1 * k });
+      });
+      for (const h of [...new Set(jumps)]) {
+        out.push({ f0: h, f1: h, v0: at(h - EPS), v1: at(h + EPS), hold: true });
+      }
+      return out.sort((a, b) => a.f0 - b.f0 || a.f1 - b.f1);
     },
   };
 }
