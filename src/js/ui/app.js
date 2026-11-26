@@ -6,7 +6,7 @@ import { t, num, getLang, setLang, detectLang, onLangChange } from '../i18n/i18n
 import { downloadText, copyText } from './download.js';
 
 const $ = s => document.querySelector(s);
-const SAMPLE_URL = 'samples/sample.json';
+const SAMPLES_DIR = 'samples/';
 
 const state = {
   json: null, res: null, frame: 0, total: 0, fr: 30, ip: 0,
@@ -97,6 +97,7 @@ function renderChips() {
     ['meta_chips.paths', num(r.stats.paths)],
     ['meta_chips.groups', num(r.stats.groups)],
     ['meta_chips.animators', num(r.stats.animators)],
+    ...(r.stats.gradients ? [['meta_chips.gradients', num(r.stats.gradients)]] : []),
     ['meta_chips.xmlSize', sz > 1024 ? t('meta_chips.kb', num(Math.round(sz / 102.4) / 10)) : t('meta_chips.bytes', num(sz))],
   ];
   const meta = $('#meta');
@@ -167,7 +168,12 @@ function runConvert() {
   if (!state.json) return;
   showErr(null);
   try {
-    const r = convert(state.json, { dp: +$('#dp').value, step: +$('#step').value, precision: +$('#prec').value });
+    const r = convert(state.json, {
+      dp: +$('#dp').value,
+      step: +$('#step').value,
+      precision: +$('#prec').value,
+      gradients: $('#gradients').checked,
+    });
     state.res = r;
     $('#xml').value = r.xml;
     renderChips();
@@ -283,10 +289,11 @@ function readFile(file) {
 }
 
 async function loadSample() {
+  const file = $('#sampleSel').value;
   try {
-    const res = await fetch(SAMPLE_URL);
+    const res = await fetch(SAMPLES_DIR + encodeURIComponent(file));
     if (!res.ok) throw new Error(res.status);
-    loadJson(await res.json(), 'avd_sample.json');
+    loadJson(await res.json(), 'avd_' + file);
   } catch (e) {
     console.error(e);
     showErr('sampleLoad');
@@ -304,7 +311,7 @@ function bindEvents() {
   drop.addEventListener('drop', e => readFile(e.dataTransfer && e.dataTransfer.files[0]));
 
   $('#sample').addEventListener('click', loadSample);
-  ['#dp', '#prec', '#step'].forEach(s => $(s).addEventListener('change', runConvert));
+  ['#dp', '#prec', '#step', '#gradients'].forEach(s => $(s).addEventListener('change', runConvert));
   $('#resName').addEventListener('input', renderHowto);
 
   $('#play').addEventListener('click', () => {

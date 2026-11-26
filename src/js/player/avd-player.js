@@ -101,6 +101,55 @@ function parseInterpolator(el) {
   return NAMED.accelerate_decelerate_interpolator;
 }
 
+let playerCount = 0;
+
+/** Reads an Android <gradient> into { type, x1, y1, x2, y2, cx, cy, r, stops }. */
+function parseGradient(g) {
+  const n = (k, d) => { const v = ga(g, k); return v == null || isNaN(+v) ? d : +v; };
+  let stops = kidsOf(g).filter(c => c.localName === 'item').map(it => {
+    const c = parseColor(ga(it, 'color')) || [1, 0, 0, 0];
+    const o = parseFloat(ga(it, 'offset'));
+    return { offset: clamp(isNaN(o) ? 0 : o, 0, 1), color: c };
+  });
+  if (!stops.length) {
+    // startColor / centerColor / endColor form.
+    const sc = parseColor(ga(g, 'startColor')), cc = parseColor(ga(g, 'centerColor')), ec = parseColor(ga(g, 'endColor'));
+    if (sc) stops.push({ offset: 0, color: sc });
+    if (cc) stops.push({ offset: 0.5, color: cc });
+    if (ec) stops.push({ offset: 1, color: ec });
+  }
+  return {
+    type: ga(g, 'type') || 'linear',
+    x1: n('startX', 0), y1: n('startY', 0), x2: n('endX', 0), y2: n('endY', 0),
+    cx: n('centerX', 0), cy: n('centerY', 0), r: n('gradientRadius', 0),
+    tile: ga(g, 'tileMode') || 'clamp',
+    stops,
+  };
+}
+
+/** Creates an SVG gradient element for a parsed Android gradient. */
+function svgGradient(spec, id) {
+  const radial = spec.type === 'radial';
+  const el = document.createElementNS(SVG_NS, radial ? 'radialGradient' : 'linearGradient');
+  el.setAttribute('id', id);
+  el.setAttribute('gradientUnits', 'userSpaceOnUse');
+  if (radial) {
+    el.setAttribute('cx', spec.cx); el.setAttribute('cy', spec.cy); el.setAttribute('r', spec.r);
+  } else {
+    el.setAttribute('x1', spec.x1); el.setAttribute('y1', spec.y1);
+    el.setAttribute('x2', spec.x2); el.setAttribute('y2', spec.y2);
+  }
+  el.setAttribute('spreadMethod', spec.tile === 'mirror' ? 'reflect' : spec.tile === 'repeat' ? 'repeat' : 'pad');
+  for (const st of spec.stops) {
+    const s = document.createElementNS(SVG_NS, 'stop');
+    s.setAttribute('offset', st.offset);
+    s.setAttribute('stop-color', 'rgb(' + st.color.slice(1).map(v => Math.round(v * 255)).join(',') + ')');
+    s.setAttribute('stop-opacity', st.color[0]);
+    el.appendChild(s);
+  }
+  return el;
+}
+
 const guessType = p => (p === 'pathData' ? 'pathType' : (p === 'fillColor' || p === 'strokeColor') ? 'colorType' : 'floatType');
 
 export class AVDPlayer {
@@ -108,6 +157,7 @@ export class AVDPlayer {
     this.host = host;
     this.nodes = [];
     this.duration = 0;
+    this.uid = 'avd' + (++playerCount);
   }
 
   /** Parses AVD XML and builds the SVG. Throws PlayerError on invalid input. */
@@ -130,6 +180,9 @@ export class AVDPlayer {
     this.nodes = [];
     this.duration = 0;
     const byName = new Map();
+    const defs = document.createElementNS(SVG_NS, 'defs');
+    svg.appendChild(defs);
+    let gradCount = 0;
 
     const build = (el, parentSvg) => {
       for (const c of kidsOf(el)) {
@@ -142,6 +195,17 @@ export class AVDPlayer {
           if (a.name.startsWith('xmlns')) continue;
           const key = a.name.startsWith('android:') ? a.name.slice(8) : (a.namespaceURI === ANDROID_NS ? a.localName : null);
           if (key) n.base[key] = a.value;
+        }
+        if (c.localName === 'path') {
+          for (const attr of ['fillColor', 'strokeColor']) {
+            const wrap = aaptOf(c, 'android:' + attr);
+            const g = wrap && kidsOf(wrap).find(k => k.localName === 'gradient');
+            if (!g) continue;
+            const id = this.uid + '-g' + (++gradCount);
+            defs.appendChild(svgGradient(parseGradient(g), id));
+            n.gradients = n.gradients || {};
+            n.gradients[attr] = 'url(#' + id + ')';
+          }
         }
         parentSvg.appendChild(n.el);
         this.nodes.push(n);
@@ -230,17 +294,21 @@ export class AVDPlayer {
       const d = this.value(n, 'pathData', ms, 'pathType');
       this.set(n, 'd', d ? d.s : null);
 
+      const grad = n.gradients || {};
       const fc = this.value(n, 'fillColor', ms, 'colorType');
-      if (fc) {
+      if (grad.fillColor) {
+        this.set(n, 'fill', grad.fillColor);
+        this.set(n, 'fill-opacity', String(clamp(f('fillAlpha', 1), 0, 1)));
+      } else if (fc) {
         this.set(n, 'fill', rgb(fc));
         this.set(n, 'fill-opacity', String(clamp(fc[0] * f('fillAlpha', 1), 0, 1)));
       } else this.set(n, 'fill', 'none');
       this.set(n, 'fill-rule', n.base.fillType === 'evenOdd' ? 'evenodd' : 'nonzero');
 
       const sc = this.value(n, 'strokeColor', ms, 'colorType'), sw = f('strokeWidth', 0);
-      if (!(sc && sw > 0)) { this.set(n, 'stroke', 'none'); continue; }
-      this.set(n, 'stroke', rgb(sc));
-      this.set(n, 'stroke-opacity', String(clamp(sc[0] * f('strokeAlpha', 1), 0, 1)));
+      if (!((sc || grad.strokeColor) && sw > 0)) { this.set(n, 'stroke', 'none'); continue; }
+      this.set(n, 'stroke', grad.strokeColor || rgb(sc));
+      this.set(n, 'stroke-opacity', String(clamp((grad.strokeColor ? 1 : sc[0]) * f('strokeAlpha', 1), 0, 1)));
       this.set(n, 'stroke-width', String(sw));
       this.set(n, 'stroke-linecap', n.base.strokeLineCap || 'butt');
       this.set(n, 'stroke-linejoin', n.base.strokeLineJoin || 'miter');

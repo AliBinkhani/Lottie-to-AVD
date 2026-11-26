@@ -12,7 +12,7 @@
 
 ## ویژگی‌ها
 
-- **تبدیل**: لایه‌های Shape، Solid و Precomp، والد‌گذاری لایه‌ها، گروه‌ها، Transformها (جابه‌جایی، چرخش، مقیاس و Anchor Point)، Fill و Stroke، Trim Path و شکل‌های بیضی، مستطیل و ستاره.
+- **تبدیل**: لایه‌های Shape، Solid و Precomp، والد‌گذاری لایه‌ها، گروه‌ها، Transformها (جابه‌جایی، چرخش، مقیاس و Anchor Point)، Fill و Stroke، گرادیان‌های خطی و شعاعی، Trim Path و شکل‌های بیضی، مستطیل و ستاره.
 - **زمان‌بندی دقیق**: کی‌فریم‌ها به `objectAnimator` و منحنی‌های easing لوتی به `pathInterpolator` تبدیل می‌شوند. ویژگی‌هایی که معادل مستقیم در AVD ندارند با نمونه‌برداری به کی‌فریم‌های خطی تبدیل می‌شوند و خروجی همچنان کاملاً برداری می‌ماند.
 - **مقایسه‌ی زنده**: لوتی اصلی (با lottie-web) و AVD تولیدشده (با شبیه‌ساز داخلی) کنار هم یا روی هم با حالت ترکیب Difference پخش می‌شوند.
 - **گزارش تبدیل**: موارد پشتیبانی‌نشده مثل ماسک، Matte، متن، تصویر، گرادیان، خط‌چین و Expression را فهرست می‌کند.
@@ -61,6 +61,10 @@ avd.start()
 
 </div>
 
+### گرادیان و حداقل SDK
+
+گرادیان‌ها به‌صورت عنصر درون‌خطی `<gradient>` داخل `fillColor` یا `strokeColor` نوشته می‌شوند و به اندروید ۷ (API 24) یا بالاتر، یا `AnimatedVectorDrawableCompat` نیاز دارند. گزینه‌ی **پشتیبانی از گرادیان (نیازمند API 24 به بالا)** به‌صورت پیش‌فرض روشن است. اگر برای نسخه‌های قدیمی‌تر از drawable خود پلتفرم استفاده می‌کنید آن را خاموش کنید تا هر گرادیان با اولین رنگش جایگزین شود.
+
 ## محدودیت‌ها
 
 ویژگی‌های زیر در AVD معادلی ندارند. نادیده گرفته یا تقریب زده می‌شوند و هر کدام که در فایل باشد در گزارش تبدیل می‌آید:
@@ -69,7 +73,9 @@ avd.start()
 | --- | --- |
 | ماسک و Track Matte | نادیده گرفته می‌شود و لایه بدون ماسک رسم می‌شود |
 | لایه‌های متن و تصویر | حذف می‌شوند (متن را در After Effects به Shape تبدیل کنید) |
-| گرادیان | با اولین رنگ آن جایگزین می‌شود |
+| گرادیان متحرک | با فریم اولش تبدیل می‌شود (AVD گرادیان را انیمیت نمی‌کند) |
+| Highlight گرادیان شعاعی | نادیده گرفته می‌شود و گرادیان از مرکز رسم می‌شود |
+| گرادیان وقتی گزینه‌ی *پشتیبانی از گرادیان* خاموش است | با اولین رنگ آن جایگزین می‌شود |
 | خط‌چین (Dash) | به‌صورت خط پیوسته رسم می‌شود |
 | Merge Paths، Repeater، Round Corners، Twist، Pucker/Bloat، Zig Zag، Offset Path | نادیده گرفته می‌شوند |
 | لایه‌های سه‌بعدی، Skew، Time Remap، افکت‌های لایه | نادیده گرفته می‌شوند |
@@ -85,14 +91,15 @@ avd.start()
 .
 ├── index.html                  # Page markup (text comes from i18n keys)
 ├── samples/
-│   └── sample.json             # Built-in demo animation
+│   ├── sample.json             # Demo: basic shapes, morph, trim path
+│   └── gradient.json           # Demo: linear/radial gradient fills and strokes
 ├── src/
 │   ├── css/
 │   │   ├── fonts.css           # Self-hosted @font-face rules
 │   │   └── styles.css          # Theme tokens (light/dark) and layout
 │   └── js/
 │       ├── core/               # math.js, format.js
-│       ├── lottie/             # properties.js, geometry.js
+│       ├── lottie/             # properties.js, geometry.js, gradient.js
 │       ├── converter/          # tracks.js, converter.js, xml-writer.js
 │       ├── player/             # avd-player.js
 │       ├── i18n/               # i18n.js, locales/en.js, locales/fa.js

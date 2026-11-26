@@ -74,7 +74,7 @@ input[dir=ltr]{text-align:left}
 .overlaybox{display:none}
 .stages.overlay .stage.lottie-stage{background:#000;isolation:isolate}
 .stages.overlay .overlaybox{display:block}
-.stages.overlay .overlaybox .canvas{mix-blend-mode:difference}
+.stages.overlay .overlaybox.canvas{mix-blend-mode:difference}
 .overlay-note{font-size:13px;color:var(--muted);margin-top:6px}
 
 .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
@@ -107,3 +107,12 @@ code.inl{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padd
 .top-bar .titles{min-width:0;flex:1 1 280px}
 .lang-switch{flex:none}
 .label-btn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.opt-check{margin-top:12px;font-weight:600}
+
+/* Input area: text, then a centred file picker, then sample controls */
+.drop{flex-direction:column;justify-content:center;text-align:center}
+.drop-actions{display:flex;flex-direction:column;align-items:center;width:100%}
+.drop-actions .label-btn{justify-content:center;min-width:200px;margin-bottom:16px}
+.sample-row{display:flex;justify-content:center;gap:8px;max-width:100%}
+.sample-row select{flex:0 1 auto;min-width:0}
+.sample-row button{flex:none}
