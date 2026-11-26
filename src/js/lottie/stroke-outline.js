@@ -6,9 +6,8 @@
  * path and options, whatever the trim values are. That lets the polygons be
  * animated with plain pathData interpolation between sampled frames.
  *
- * Every path vertex gets its own outline vertex with a miter offset (within
- * the miter limit), so sharp corners stay sharp. Round and bevel joins are
- * approximated by a single point at the stroke's half width.
+ * Every path vertex gets a fixed number of outline vertices for its join
+ * (miter within the miter limit, round arc, or bevel), so corners match.
  */
 import { cubicPoint } from '../core/math.js';
 
@@ -57,19 +56,56 @@ function sampleAt(fl, d) {
   };
 }
 
-/** Offset direction and distance for a join at arc length d. */
-function joinOffset(fl, closed, d, hw, join, miterLimit) {
+const ROUND_JOIN_POINTS = 5;
+/** Outline vertices per corner: round joins need an arc; miter/bevel need two. */
+const joinCount = join => (join === 'round' ? ROUND_JOIN_POINTS : 2);
+
+/**
+ * Outline points on the left (+normal) and right (-normal) side for a join
+ * at arc length d. Always returns joinCount(join) points per side so the
+ * vertex count does not depend on the trim.
+ *  - miter: the miter point (within the miter limit, else like bevel)
+ *  - round: an arc on the outer side; the inner side repeats its corner point
+ *  - bevel: the two segment ends on the outer side
+ */
+function joinPoints(fl, closed, d, p, hw, join, miterLimit) {
   const eps = Math.max(1e-4, fl.total * 1e-5);
   const wrapD = x => (closed ? ((x % fl.total) + fl.total) % fl.total : x);
   const t1 = sampleAt(fl, wrapD(d - eps)).t, t2 = sampleAt(fl, wrapD(d + eps)).t;
   const n1 = [-t1[1], t1[0]], n2 = [-t2[1], t2[0]];
   const m = [n1[0] + n2[0], n1[1] + n2[1]];
   const ml = Math.hypot(m[0], m[1]);
-  if (ml < 1e-6) return { n: n2, dist: hw };            // 180° turn
+  const at = (n, dist) => [p[0] + n[0] * dist, p[1] + n[1] * dist];
+  const count = joinCount(join);
+  const rep = q => Array(count).fill(q);
+  if (ml < 1e-6) return { left: rep(at(n2, hw)), right: rep(at(n2, -hw)) }; // 180° turn
   const dir = [m[0] / ml, m[1] / ml];
-  const miter = hw * 2 / ml;                              // hw / cos(θ/2)
-  const dist = join === 'miter' && miter / hw <= miterLimit ? miter : hw;
-  return { n: dir, dist };
+  const miter = hw * 2 / ml; // hw / cos(θ/2)
+  // Inner side: the miter point (intersection of both offset edges).
+  const inner = Math.min(miter, hw * 4);
+  const cross = t1[0] * t2[1] - t1[1] * t2[0];
+  const outerSign = cross > 0 ? -1 : 1; // which side (+n / -n) is outside the turn
+  let outer;
+  if (join === 'miter' && miter / hw <= miterLimit) {
+    outer = rep(at(dir, outerSign * miter));
+  } else {
+    const a1 = [n1[0] * outerSign, n1[1] * outerSign], a2 = [n2[0] * outerSign, n2[1] * outerSign];
+    if (join === 'round') {
+      const ang1 = Math.atan2(a1[1], a1[0]);
+      let delta = Math.atan2(a2[1], a2[0]) - ang1;
+      while (delta > Math.PI) delta -= 2 * Math.PI;
+      while (delta < -Math.PI) delta += 2 * Math.PI;
+      outer = [];
+      for (let k = 0; k < count; k++) {
+        const a = ang1 + delta * k / (count - 1);
+        outer.push([p[0] + Math.cos(a) * hw, p[1] + Math.sin(a) * hw]);
+      }
+    } else {
+      outer = rep(at(a1, hw)).map((q, k) => (k < count / 2 ? q : at(a2, hw)));
+    }
+  }
+  const innerPts = rep(at(dir, -outerSign * inner));
+  return outerSign > 0 ? { left: outer, right: innerPts } : { left: innerPts, right: outer };
 }
 
 /**
@@ -86,7 +122,7 @@ function band(fl, closed, d0, span, hw, o, samples) {
   for (const cd of fl.corners) {
     let u = closed && fl.total > 0 ? (((cd - d0) % fl.total) + fl.total) % fl.total : cd - d0;
     const inside = u > 1e-6 && u < span - 1e-6;
-    pos.push({ u: Math.max(0, Math.min(span, u)), corner: inside });
+    pos.push({ u: Math.max(0, Math.min(span, u)), corner: inside, cornerSlot: true });
   }
   pos.sort((a, b) => a.u - b.u || (a.corner ? 1 : 0) - (b.corner ? 1 : 0));
 
@@ -95,10 +131,19 @@ function band(fl, closed, d0, span, hw, o, samples) {
   for (const q of pos) {
     const d = wrapD(d0 + q.u);
     const smp = sampleAt(fl, d);
-    let n = [-smp.t[1], smp.t[0]], dist = hw;
-    if (q.corner) ({ n, dist } = joinOffset(fl, closed, d, hw, o.join, o.miterLimit));
-    left.push([smp.p[0] + n[0] * dist, smp.p[1] + n[1] * dist]);
-    right.push([smp.p[0] - n[0] * dist, smp.p[1] - n[1] * dist]);
+    if (q.corner) {
+      const jp = joinPoints(fl, closed, d, smp.p, hw, o.join, o.miterLimit);
+      left.push(...jp.left);
+      right.push(...jp.right);
+    } else {
+      // Clamped corners outside the stretch keep the same vertex count.
+      const n = [-smp.t[1], smp.t[0]];
+      const reps = q.cornerSlot ? joinCount(o.join) : 1;
+      for (let r = 0; r < reps; r++) {
+        left.push([smp.p[0] + n[0] * hw, smp.p[1] + n[1] * hw]);
+        right.push([smp.p[0] - n[0] * hw, smp.p[1] - n[1] * hw]);
+      }
+    }
     if (!first) first = smp;
     last = smp;
   }
@@ -126,10 +171,18 @@ function band(fl, closed, d0, span, hw, o, samples) {
   return { v: poly, c: true, poly: true };
 }
 
-/** Number of samples along the path, based on its (static) vertex count. */
+/**
+ * Number of evenly spaced samples along the path, from its (static) shape.
+ * Straight segments are already exact through the corner vertices, so only
+ * curved segments need extra samples.
+ */
 export function outlineSamples(sh) {
-  const segs = sh && sh.v ? (sh.c ? sh.v.length : sh.v.length - 1) : 1;
-  return Math.max(24, Math.min(160, segs * 12));
+  if (!sh || !sh.v || sh.v.length < 2) return 2;
+  const n = sh.v.length, segs = sh.c ? n : n - 1;
+  const nz = d => d && (Math.abs(d[0]) > 1e-6 || Math.abs(d[1]) > 1e-6);
+  let curved = 0;
+  for (let j = 0; j < segs; j++) if (nz((sh.o || [])[j]) || nz((sh.i || [])[(j + 1) % n])) curved++;
+  return curved ? Math.min(160, 2 + curved * 12) : 2;
 }
 
 /**
