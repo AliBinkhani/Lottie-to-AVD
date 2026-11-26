@@ -11,8 +11,8 @@ Everything runs locally in the browser. No files are uploaded anywhere.
 ## Features
 
 - **Conversion**: shape, solid and precomp layers, parenting, groups, transforms (position, rotation,
-  scale, anchor point), fills and strokes, linear and radial gradients, Trim Paths, and ellipse /
-  rectangle / star shapes.
+  scale, anchor point), fills and strokes, linear and radial gradients, Trim Paths, ellipse /
+  rectangle / star shapes, and track mattes and masks (as `<clip-path>`).
 - **Faithful timing**: keyframes become `objectAnimator`s, and Lottie easing curves become
   `pathInterpolator`s. Properties with no direct AVD equivalent are sampled and simplified into
   linear keyframes, so the output stays fully vector.
@@ -73,7 +73,10 @@ report lists any that were found:
 
 | Feature | Behaviour |
 | --- | --- |
-| Masks, track mattes | Ignored; the layer is drawn unmasked |
+| Luma track mattes | Converted as alpha mattes |
+| Soft mattes and masks (partial opacity, gradients, feather, expansion) | Clipped with hard edges |
+| Track mattes made of strokes | Not supported yet; ignored |
+| Mask modes other than Add → Subtract / Intersect (e.g. Add after Subtract, Lighten, Difference) | Approximated |
 | Text and image layers | Skipped (convert text to shapes in After Effects) |
 | Animated gradients | Converted using their first frame (AVDs cannot animate gradients) |
 | Radial gradient highlight | Ignored; the gradient stays centred |
@@ -92,7 +95,8 @@ report lists any that were found:
 ├── index.html                  # Page markup (text comes from i18n keys)
 ├── samples/
 │   ├── sample.json             # Demo: basic shapes, morph, trim path
-│   └── gradient.json           # Demo: linear/radial gradient fills and strokes
+│   ├── gradient.json           # Demo: linear/radial gradient fills and strokes
+│   └── mattes.json             # Demo: alpha / inverted mattes and masks
 ├── src/
 │   ├── css/
 │   │   ├── fonts.css           # Self-hosted @font-face rules
@@ -104,9 +108,11 @@ report lists any that were found:
 │       ├── lottie/
 │       │   ├── properties.js   # Keyframe evaluation of Lottie properties
 │       │   ├── geometry.js     # Shapes → path data
-│       │   └── gradient.js     # Gradient stops, start/end points
+│       │   ├── gradient.js     # Gradient stops, start/end points
+│       │   └── transform.js    # Affine matrices for layer / group transforms
 │       ├── converter/
 │       │   ├── tracks.js       # Property tracks over time
+│       │   ├── clipping.js     # Track mattes and masks → clip-path tracks
 │       │   ├── converter.js    # Lottie → scene → animators (entry point)
 │       │   └── xml-writer.js   # Scene → AnimatedVectorDrawable XML
 │       ├── player/

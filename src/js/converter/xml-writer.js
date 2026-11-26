@@ -6,6 +6,7 @@ export const ANDROID_NS = 'http://schemas.android.com/apk/res/android';
 export const AAPT_NS = 'http://schemas.android.com/aapt';
 
 const GROUP_ATTRS = ['name', 'pivotX', 'pivotY', 'rotation', 'scaleX', 'scaleY', 'translateX', 'translateY'];
+const CLIP_ATTRS = ['name', 'pathData'];
 const PATH_ATTRS = ['name', 'pathData', 'fillColor', 'fillAlpha', 'fillType', 'strokeColor', 'strokeAlpha',
   'strokeWidth', 'strokeLineCap', 'strokeLineJoin', 'strokeMiterLimit', 'trimPathStart', 'trimPathEnd', 'trimPathOffset'];
 
@@ -43,7 +44,7 @@ export function writeXml(root, { W, H, fr, ip, dp }) {
   setA(vec, 'viewportWidth', fmt(W));
   setA(vec, 'viewportHeight', fmt(H));
 
-  const stats = { groups: 0, paths: 0, animators: 0, targets: 0, gradients: 0 };
+  const stats = { groups: 0, paths: 0, clips: 0, animators: 0, targets: 0, gradients: 0 };
 
   /** <aapt:attr name="android:fillColor|strokeColor"><gradient …/></aapt:attr> */
   function gradientEl({ attr, spec }) {
@@ -79,13 +80,16 @@ export function writeXml(root, { W, H, fr, ip, dp }) {
     for (const c of n.children) {
       const e = doc.createElement(c.tag);
       c.attrs.name = c.name;
-      for (const k of (c.tag === 'group' ? GROUP_ATTRS : PATH_ATTRS)) if (c.attrs[k] != null) setA(e, k, c.attrs[k]);
+      const attrs = c.tag === 'group' ? GROUP_ATTRS : c.tag === 'clip-path' ? CLIP_ATTRS : PATH_ATTRS;
+      for (const k of attrs) if (c.attrs[k] != null) setA(e, k, c.attrs[k]);
       if (c.gradient) {
         e.appendChild(gradientEl(c.gradient));
         stats.gradients++;
       }
       parentEl.appendChild(e);
-      if (c.tag === 'group') stats.groups++; else stats.paths++;
+      if (c.tag === 'group') stats.groups++;
+      else if (c.tag === 'clip-path') stats.clips++;
+      else stats.paths++;
       if (c.anims.length) targets.push(c);
       if (c.tag === 'group') emit(c, e);
     }

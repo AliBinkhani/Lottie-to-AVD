@@ -12,7 +12,7 @@
 
 ## ویژگی‌ها
 
-- **تبدیل**: لایه‌های Shape، Solid و Precomp، والد‌گذاری لایه‌ها، گروه‌ها، Transformها (جابه‌جایی، چرخش، مقیاس و Anchor Point)، Fill و Stroke، گرادیان‌های خطی و شعاعی، Trim Path و شکل‌های بیضی، مستطیل و ستاره.
+- **تبدیل**: لایه‌های Shape، Solid و Precomp، والد‌گذاری لایه‌ها، گروه‌ها، Transformها (جابه‌جایی، چرخش، مقیاس و Anchor Point)، Fill و Stroke، گرادیان‌های خطی و شعاعی، Trim Path، شکل‌های بیضی، مستطیل و ستاره، و Track Matte و ماسک (به‌صورت `<clip-path>`).
 - **زمان‌بندی دقیق**: کی‌فریم‌ها به `objectAnimator` و منحنی‌های easing لوتی به `pathInterpolator` تبدیل می‌شوند. ویژگی‌هایی که معادل مستقیم در AVD ندارند با نمونه‌برداری به کی‌فریم‌های خطی تبدیل می‌شوند و خروجی همچنان کاملاً برداری می‌ماند.
 - **مقایسه‌ی زنده**: لوتی اصلی (با lottie-web) و AVD تولیدشده (با شبیه‌ساز داخلی) کنار هم یا روی هم با حالت ترکیب Difference پخش می‌شوند.
 - **گزارش تبدیل**: موارد پشتیبانی‌نشده مثل ماسک، Matte، متن، تصویر، گرادیان، خط‌چین و Expression را فهرست می‌کند.
@@ -71,7 +71,10 @@ avd.start()
 
 | ویژگی | رفتار |
 | --- | --- |
-| ماسک و Track Matte | نادیده گرفته می‌شود و لایه بدون ماسک رسم می‌شود |
+| Luma Matte | به‌صورت Alpha Matte تبدیل می‌شود |
+| مت و ماسک نرم (شفافیت جزئی، گرادیان، Feather، Expansion) | با لبه‌ی تیز برش می‌خورد |
+| Track Matte ساخته‌شده از خط (Stroke) | هنوز پشتیبانی نمی‌شود و نادیده گرفته می‌شود |
+| حالت‌های ماسک به‌جز Add و پس از آن Subtract یا Intersect (مثلاً Add بعد از Subtract، Lighten، Difference) | تقریبی تبدیل می‌شود |
 | لایه‌های متن و تصویر | حذف می‌شوند (متن را در After Effects به Shape تبدیل کنید) |
 | گرادیان متحرک | با فریم اولش تبدیل می‌شود (AVD گرادیان را انیمیت نمی‌کند) |
 | Highlight گرادیان شعاعی | نادیده گرفته می‌شود و گرادیان از مرکز رسم می‌شود |
@@ -92,15 +95,16 @@ avd.start()
 ├── index.html                  # Page markup (text comes from i18n keys)
 ├── samples/
 │   ├── sample.json             # Demo: basic shapes, morph, trim path
-│   └── gradient.json           # Demo: linear/radial gradient fills and strokes
+│   ├── gradient.json           # Demo: linear/radial gradient fills and strokes
+│   └── mattes.json             # Demo: alpha / inverted mattes and masks
 ├── src/
 │   ├── css/
 │   │   ├── fonts.css           # Self-hosted @font-face rules
 │   │   └── styles.css          # Theme tokens (light/dark) and layout
 │   └── js/
 │       ├── core/               # math.js, format.js
-│       ├── lottie/             # properties.js, geometry.js, gradient.js
-│       ├── converter/          # tracks.js, converter.js, xml-writer.js
+│       ├── lottie/             # properties.js, geometry.js, gradient.js, transform.js
+│       ├── converter/          # tracks.js, clipping.js, converter.js, xml-writer.js
 │       ├── player/             # avd-player.js
 │       ├── i18n/               # i18n.js, locales/en.js, locales/fa.js
 │       └── ui/                 # app.js, download.js

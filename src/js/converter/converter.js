@@ -17,6 +17,7 @@ import { shapeToD, geomD } from '../lottie/geometry.js';
 import { gradientAt, isGradientAnimated, hasHighlight, firstGradientColor } from '../lottie/gradient.js';
 import { mapT, unmap, constTrack, numTrack, offsetTrack, prodTrack, colorTrack } from './tracks.js';
 import { writeXml } from './xml-writer.js';
+import { matteClip, maskClips } from './clipping.js';
 
 /** Error with a translatable code. */
 export class ConversionError extends Error {
@@ -269,25 +270,31 @@ export function convert(json, opts = {}) {
     }
   }
 
+  /** Adds clip-path tracks to `host`; each extra clip nests one group deeper. Returns the innermost group. */
+  function addClips(host, tracks, label) {
+    tracks.forEach((track, k) => {
+      if (k > 0) {
+        const g = node('group', uname(label + '_clip'));
+        host.children.push(g);
+        host = g;
+      }
+      const c = node('clip-path', uname(label + '_clip'));
+      c.tracks.pathData = track;
+      host.children.unshift(c);
+      host.clipped = true;
+    });
+    return host;
+  }
+
+  /** Size of the "everything" rectangle used for inverted clips. */
+  const clipBound = 10 * Math.max(W, H) + 10000;
+
   function renderComp(layers, ctx, parent) {
     const byInd = new Map();
     layers.forEach(l => { if (l && l.ind != null) byInd.set(l.ind, l); });
-    for (let i = layers.length - 1; i >= 0; i--) {
-      const L = layers[i];
-      if (!L || L.hd || L.td) continue;
-      if (L.tt) warn('matte');
-      if (L.hasMask || (L.masksProperties && L.masksProperties.length)) warn('mask');
-      if (L.ddd) warn('d3');
-      if (L.ef && L.ef.length) warn('effects');
-      if (L.tm) warn('timeremap');
-      const vis = visTrack(L, ctx.map);
-      if (!vis.animated && vis.at(0) === 0) continue;
-      if (L.ty === 3) continue; // null layer
-      if (L.ty === 2) { warn('image'); continue; }
-      if (L.ty === 5) { warn('text'); continue; }
-      if (![0, 1, 4].includes(L.ty)) { warn('unknownLayer'); continue; }
 
-      // Parent chain, outermost first.
+    /** Layer plus its parents, outermost first. */
+    const parentChain = L => {
       const chain = [];
       let cur = L;
       const seen = new Set([L]);
@@ -299,11 +306,64 @@ export function convert(json, opts = {}) {
         seen.add(p);
         cur = p;
       }
-      let host = parent;
-      for (const c of chain) host = addTransform(host, c.ks, layerMap(ctx.map, c), c.nm || 'layer');
+      return chain;
+    };
 
+    for (let i = layers.length - 1; i >= 0; i--) {
+      const L = layers[i];
+      if (!L || L.hd || L.td) continue;
+      if (L.ddd) warn('d3');
+      if (L.ef && L.ef.length) warn('effects');
+      if (L.tm) warn('timeremap');
+      const vis = visTrack(L, ctx.map);
+      if (!vis.animated && vis.at(0) === 0) continue;
+      if (L.ty === 3) continue; // null layer
+      if (L.ty === 2) { warn('image'); continue; }
+      if (L.ty === 5) { warn('text'); continue; }
+      if (![0, 1, 4].includes(L.ty)) { warn('unknownLayer'); continue; }
+
+      const chain = parentChain(L);
       const lm = layerMap(ctx.map, L);
       const alpha = ctx.alpha.concat([numTrack(L.ks && L.ks.o, lm, 0, 'num', v => v / 100, 100), vis]);
+      let host = parent;
+      let start = 0;
+
+      // Track matte: clip in the space of the ancestors both layers share.
+      if (L.tt) {
+        const matte = L.tp != null ? byInd.get(L.tp) : layers[i - 1];
+        const inverted = L.tt === 2 || L.tt === 4;
+        if (!matte) {
+          warn('matteUnsupported');
+        } else {
+          const mChain = parentChain(matte);
+          let k = 0;
+          while (k < chain.length - 1 && k < mChain.length - 1 && chain[k] === mChain[k]) k++;
+          const res = matteClip({
+            matte, restChain: mChain.slice(k), mapOf: c => layerMap(ctx.map, c), inverted, bound: clipBound,
+          });
+          if (res.unsupported) {
+            warn(res.unsupported === 'stroke' ? 'matteStroke' : 'matteUnsupported');
+          } else {
+            if (L.tt === 3 || L.tt === 4) warn('matteLuma');
+            if (res.flags.soft) warn('matteSoft');
+            if (res.flags.stroke) warn('matteStroke');
+            for (; start < k; start++) host = addTransform(host, chain[start].ks, layerMap(ctx.map, chain[start]), chain[start].nm || 'layer');
+            const wrap = node('group', uname((L.nm || 'layer') + '_matte'));
+            host.children.push(wrap);
+            host = addClips(wrap, [res.track], matte.nm || 'matte');
+            // Outside the matte's in/out range an alpha matte hides the layer.
+            if (!inverted) alpha.push(visTrack(matte, ctx.map));
+          }
+        }
+      }
+
+      for (; start < chain.length; start++) host = addTransform(host, chain[start].ks, layerMap(ctx.map, chain[start]), chain[start].nm || 'layer');
+
+      // Masks: clip in the layer's own space.
+      if (L.masksProperties && L.masksProperties.length) {
+        host = addClips(host, maskClips(L.masksProperties, lm, { bound: clipBound, warn }), (L.nm || 'layer') + '_mask');
+      }
+
       if (L.ty === 4) {
         renderShapes(L.shapes, host, { map: lm, alpha });
       } else if (L.ty === 1) {
@@ -325,12 +385,13 @@ export function convert(json, opts = {}) {
 
   renderComp(json.layers, { map: { a: 1, b: 0 }, alpha: [], depth: 0 }, root);
 
-  // Drop empty groups.
+  // Drop groups that draw nothing (a group holding only a clip-path draws nothing).
+  const drawsSomething = n => n.children.some(c => c.tag === 'path' || (c.tag === 'group' && drawsSomething(c)));
   (function prune(n) {
     n.children = n.children.filter(c => {
-      if (c.tag === 'path') return true;
+      if (c.tag === 'path' || c.tag === 'clip-path') return true;
       prune(c);
-      return c.children.length > 0;
+      return drawsSomething(c);
     });
   })(root);
 
@@ -430,7 +491,9 @@ export function convert(json, opts = {}) {
     for (const c of n.children) {
       if (c.tag === 'group') {
         flatten(c);
-        if (!c.anims.length && Object.keys(c.attrs).length === 0) { out.push(...c.children); continue; }
+        // A clip-path only affects its own group, so clipped groups must stay.
+        const clips = c.children.some(x => x.tag === 'clip-path');
+        if (!clips && !c.anims.length && Object.keys(c.attrs).length === 0) { out.push(...c.children); continue; }
       }
       out.push(c);
     }
