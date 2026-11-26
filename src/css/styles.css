@@ -75,6 +75,8 @@ input[dir=ltr]{text-align:left}
 .stages.overlay .stage.lottie-stage{background:#000;isolation:isolate}
 .stages.overlay .overlaybox{display:block}
 .stages.overlay .overlaybox.canvas{mix-blend-mode:difference}
+/* Both renders sit on the same opaque white, so translucent content cancels exactly. */
+.stages.overlay #lottieBox,.stages.overlay #overlayBox{background:#fff}
 .overlay-note{font-size:13px;color:var(--muted);margin-top:6px}
 
 .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
