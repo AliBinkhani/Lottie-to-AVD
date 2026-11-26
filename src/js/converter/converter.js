@@ -88,7 +88,12 @@ export function convert(json, opts = {}) {
 
   /* ---------- scene building ---------- */
 
-  function layerMap(compMap, L) {
+  /**
+   * Time map for the layers *inside* a precomp layer L. A layer's own keyframes
+   * (transform, shapes, masks) are in its composition's time, like lottie-web;
+   * start time (st) and stretch (sr) only shift the precomp's inner timeline.
+   */
+  function innerCompMap(compMap, L) {
     const sr = L.sr || 1, st = L.st || 0;
     return { a: compMap.a * sr, b: compMap.a * st + compMap.b };
   }
@@ -323,7 +328,7 @@ export function convert(json, opts = {}) {
       if (![0, 1, 4].includes(L.ty)) { warn('unknownLayer'); continue; }
 
       const chain = parentChain(L);
-      const lm = layerMap(ctx.map, L);
+      const lm = ctx.map;
       const alpha = ctx.alpha.concat([numTrack(L.ks && L.ks.o, lm, 0, 'num', v => v / 100, 100), vis]);
       let host = parent;
       let start = 0;
@@ -339,7 +344,7 @@ export function convert(json, opts = {}) {
           let k = 0;
           while (k < chain.length - 1 && k < mChain.length - 1 && chain[k] === mChain[k]) k++;
           const res = matteClip({
-            matte, restChain: mChain.slice(k), mapOf: c => layerMap(ctx.map, c), inverted, bound: clipBound,
+            matte, restChain: mChain.slice(k), mapOf: () => ctx.map, inverted, bound: clipBound,
           });
           if (res.unsupported) {
             warn(res.unsupported === 'stroke' ? 'matteStroke' : 'matteUnsupported');
@@ -347,7 +352,7 @@ export function convert(json, opts = {}) {
             if (L.tt === 3 || L.tt === 4) warn('matteLuma');
             if (res.flags.soft) warn('matteSoft');
             if (res.flags.stroke) warn('matteStroke');
-            for (; start < k; start++) host = addTransform(host, chain[start].ks, layerMap(ctx.map, chain[start]), chain[start].nm || 'layer');
+            for (; start < k; start++) host = addTransform(host, chain[start].ks, ctx.map, chain[start].nm || 'layer');
             const wrap = node('group', uname((L.nm || 'layer') + '_matte'));
             host.children.push(wrap);
             host = addClips(wrap, [res.track], matte.nm || 'matte');
@@ -357,7 +362,7 @@ export function convert(json, opts = {}) {
         }
       }
 
-      for (; start < chain.length; start++) host = addTransform(host, chain[start].ks, layerMap(ctx.map, chain[start]), chain[start].nm || 'layer');
+      for (; start < chain.length; start++) host = addTransform(host, chain[start].ks, ctx.map, chain[start].nm || 'layer');
 
       // Masks: clip in the layer's own space.
       if (L.masksProperties && L.masksProperties.length) {
@@ -377,7 +382,7 @@ export function convert(json, opts = {}) {
       } else if (L.ty === 0) {
         const a = assets[L.refId];
         if (a && Array.isArray(a.layers) && (ctx.depth || 0) < 12) {
-          renderComp(a.layers, { map: lm, alpha, depth: (ctx.depth || 0) + 1 }, host);
+          renderComp(a.layers, { map: innerCompMap(ctx.map, L), alpha, depth: (ctx.depth || 0) + 1 }, host);
         }
       }
     }
