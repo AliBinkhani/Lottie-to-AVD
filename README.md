@@ -75,7 +75,7 @@ report lists any that were found:
 | --- | --- |
 | Luma track mattes | Converted as alpha mattes |
 | Soft mattes and masks (partial opacity, gradients, feather, expansion) | Clipped with hard edges |
-| Track mattes made of strokes | Not supported yet; ignored |
+| Track mattes made of strokes | Converted to outline polygons; round/bevel joins are approximated |
 | Mask modes other than Add → Subtract / Intersect (e.g. Add after Subtract, Lighten, Difference) | Approximated |
 | Text and image layers | Skipped (convert text to shapes in After Effects) |
 | Animated gradients | Converted using their first frame (AVDs cannot animate gradients) |
