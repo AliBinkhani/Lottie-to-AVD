@@ -97,7 +97,6 @@ export default {
   },
   warnings: {
     matteUnsupported: 'A track matte could not be converted (its matte layer is missing or is not a shape or solid layer); the layer was drawn without its matte.',
-    matteStroke: 'Stroked shapes in track mattes are not supported yet and were ignored; a matte made only of strokes was not applied.',
     matteLuma: 'Luma mattes are converted as alpha mattes, so brightness-based transparency is lost.',
     matteSoft: 'A track matte uses partial opacity or gradients; the clip has hard edges.',
     maskSoft: 'Mask opacity and expansion are not supported; masks have hard edges.',

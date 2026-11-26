@@ -12,6 +12,8 @@ import { isAnim, propAt } from '../lottie/properties.js';
 import { shapeToD, geomShape } from '../lottie/geometry.js';
 import { IDENTITY, multiply, transformMatrix, isTransformAnimated, transformShape, orient } from '../lottie/transform.js';
 import { unmap, constTrack } from './tracks.js';
+import { strokeOutline, outlineSamples } from '../lottie/stroke-outline.js';
+import { fmt } from '../core/format.js';
 
 const GEOM = { sh: 1, rc: 1, el: 1, sr: 1 };
 const FILLS = { fl: 1, gf: 1 };
@@ -23,11 +25,16 @@ function rectShape(L, T, R, B) {
   return { v: [[L, T], [R, T], [R, B], [L, B]], i: z(), o: z(), c: true };
 }
 
+/** Path data for a polygon (straight edges only). */
+function polyToD(sh) {
+  return 'M' + sh.v.map(p => fmt(p[0]) + ',' + fmt(p[1])).join(' L') + ' Z';
+}
+
 /** Builds a pathType track from a function returning contours at frame f. */
 function pathTrack(contoursAt, animated, { inverted, bound }) {
   const outer = inverted ? orient(rectShape(-bound, -bound, bound, bound), false) : null;
   const toD = shapes => {
-    const parts = shapes.filter(s => s && s.v && s.v.length).map(s => shapeToD(inverted ? orient(s, true) : s));
+    const parts = shapes.filter(s => s && s.v && s.v.length).map(s => (s.poly ? polyToD(s) : shapeToD(inverted ? orient(s, true) : s)));
     if (outer) parts.unshift(shapeToD(outer));
     return parts.length ? parts.join(' ') : 'M0,0';
   };
@@ -38,37 +45,65 @@ function pathTrack(contoursAt, animated, { inverted, bound }) {
 const isOpaque = p => !p || (!isAnim(p) && Math.abs((propAt(p, 0, 'num')[0] ?? 100) - 100) < 1e-6);
 
 /**
- * Collects the geometry painted by fills in a list of shape items, together
- * with the shape-group transforms above each geometry.
+ * Collects the geometry painted by fills and strokes in a list of shape items,
+ * with the shape-group transforms above each geometry. Stroked geometry also
+ * records its stroke style and the Trim Paths that apply to it.
  */
-function collectFilled(items, trs, out, flags, seen) {
+function collectPainted(items, trs, out, flags, seen) {
   const list = (items || []).filter(it => it && !it.hd && it.ty !== 'tr');
-  const gather = (lst, upto, chain) => {
+  const trimsIn = (lst, from, to) => lst.slice(from, to).filter(x => x.ty === 'tm');
+  const gather = (lst, upto, chain, outerTrims, visit) => {
     for (let j = 0; j < upto; j++) {
       const it = lst[j];
       if (GEOM[it.ty]) {
-        if (!seen.has(it)) { seen.add(it); out.push({ geom: it, trs: chain }); }
+        visit(it, chain, trimsIn(lst, j + 1, upto).concat(outerTrims));
       } else if (it.ty === 'gr') {
         const sub = (it.it || []).filter(x => x && !x.hd && x.ty !== 'tr');
-        gather(sub, sub.length, chain.concat([(it.it || []).find(x => x && x.ty === 'tr')]));
+        const tr = (it.it || []).find(x => x && x.ty === 'tr');
+        gather(sub, sub.length, chain.concat([tr]), trimsIn(lst, j + 1, upto).concat(outerTrims), visit);
       }
     }
   };
   for (let i = 0; i < list.length; i++) {
     const it = list[i];
     if (FILLS[it.ty]) {
-      gather(list, i, trs);
+      gather(list, i, trs, [], (geom, chain) => {
+        if (!seen.has(geom)) { seen.add(geom); out.push({ geom, trs: chain }); }
+      });
       if (it.ty === 'gf' || !isOpaque(it.o)) flags.soft = true;
     } else if (STROKES[it.ty]) {
-      flags.stroke = true;
+      gather(list, i, trs, [], (geom, chain, trims) => {
+        out.push({ geom, trs: chain, stroke: it, trim: trims[0] || null });
+        if (trims.length > 1) flags.multitrim = true;
+      });
+      if (it.ty === 'gs' || !isOpaque(it.o)) flags.soft = true;
     } else if (it.ty === 'gr') {
       const tr = (it.it || []).find(x => x && x.ty === 'tr');
       if (tr && !isOpaque(tr.o)) flags.soft = true;
-      collectFilled(it.it, trs.concat([tr]), out, flags, seen);
-    } else if (it.ty === 'tm') {
-      flags.trim = true;
+      collectPainted(it.it, trs.concat([tr]), out, flags, seen);
     }
   }
+}
+
+const CAPS = { 1: 'butt', 2: 'round', 3: 'square' };
+const JOINS = { 1: 'miter', 2: 'round', 3: 'bevel' };
+const num0 = (p, t, def) => (p ? (propAt(p, t, 'num')[0] ?? def) : def);
+
+/** Outline polygons of a stroked piece at layer time t, in geometry space. */
+function strokePieceOutline(piece, t) {
+  const sh = geomShape(piece.geom, t);
+  if (!sh || !sh.v || !sh.v.length) return [];
+  const tm = piece.trim;
+  const trim = tm ? { s: num0(tm.s, t, 0) / 100, e: num0(tm.e, t, 100) / 100, o: num0(tm.o, t, 0) / 360 } : null;
+  return strokeOutline(sh, {
+    width: num0(piece.stroke.w, t, 1),
+    cap: CAPS[piece.stroke.lc] || 'butt',
+    join: JOINS[piece.stroke.lj] || 'miter',
+    miterLimit: piece.stroke.ml != null ? piece.stroke.ml : 4,
+    trim,
+    samples: piece.samples,
+    wrap: piece.wrap,
+  });
 }
 
 /**
@@ -86,20 +121,27 @@ export function matteClip({ matte, restChain, mapOf, inverted, bound }) {
   let pieces = [];
 
   if (matte.ty === 4) {
-    collectFilled(matte.shapes, [], pieces, flags, new Set());
+    collectPainted(matte.shapes, [], pieces, flags, new Set());
+    // Fix each stroke outline's vertex count from its first-frame geometry.
+    for (const p of pieces) {
+      if (!p.stroke) continue;
+      p.samples = outlineSamples(geomShape(p.geom, 0));
+      p.wrap = !!(p.trim && (isAnim(p.trim.o) || Math.abs(num0(p.trim.o, 0, 0)) > 1e-9));
+    }
   } else if (matte.ty === 1) {
     const sw = matte.sw || 0, sh = matte.sh || 0;
     pieces = [{ rect: rectShape(0, 0, sw, sh), trs: [] }];
   } else {
     return { unsupported: 'type' };
   }
-  if (!pieces.length) return { unsupported: flags.stroke ? 'stroke' : 'empty' };
+  if (!pieces.length) return { unsupported: 'empty' };
   if (matte.ks && !isOpaque(matte.ks.o)) flags.soft = true;
 
   const animated =
     restChain.some(c => isTransformAnimated(c.ks)) ||
     pieces.some(p => p.trs.some(tr => isTransformAnimated(tr)) ||
-      (p.geom && [p.geom.ks, p.geom.p, p.geom.s, p.geom.r, p.geom.or, p.geom.ir, p.geom.pt].some(isAnim)));
+      (p.geom && [p.geom.ks, p.geom.p, p.geom.s, p.geom.r, p.geom.or, p.geom.ir, p.geom.pt].some(isAnim)) ||
+      (p.stroke && (isAnim(p.stroke.w) || (p.trim && [p.trim.s, p.trim.e, p.trim.o].some(isAnim)))));
 
   const contoursAt = f => {
     // f === null: static clip, any time will do.
@@ -107,13 +149,19 @@ export function matteClip({ matte, restChain, mapOf, inverted, bound }) {
     let m = IDENTITY;
     for (const c of restChain) m = multiply(m, transformMatrix(c.ks, frameOf(c)));
     const t = frameOf(matte);
-    return pieces.map(p => {
-      const sh = p.rect || geomShape(p.geom, t);
-      if (!sh || !sh.v) return null;
+    const out = [];
+    for (const p of pieces) {
       let mp = m;
       for (const tr of p.trs) mp = multiply(mp, transformMatrix(tr, t));
-      return orient(transformShape(sh, mp), true);
-    });
+      if (p.stroke) {
+        // Outline in the geometry's own space, then transform (keeps stroke scaling right).
+        for (const poly of strokePieceOutline(p, t)) out.push(Object.assign(transformShape(poly, mp), { poly: true }));
+        continue;
+      }
+      const sh = p.rect || geomShape(p.geom, t);
+      if (sh && sh.v) out.push(orient(transformShape(sh, mp), true));
+    }
+    return out;
   };
   return { track: pathTrack(contoursAt, animated, { inverted, bound }), flags };
 }

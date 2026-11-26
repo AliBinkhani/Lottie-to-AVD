@@ -97,7 +97,6 @@ export default {
   },
   warnings: {
     matteUnsupported: 'یک Track Matte قابل تبدیل نبود (لایه‌ی مت پیدا نشد یا از نوع Shape یا Solid نیست) و لایه بدون مت رسم شد.',
-    matteStroke: 'شکل‌های خطی (Stroke) در Track Matte هنوز پشتیبانی نمی‌شوند و نادیده گرفته شدند؛ متی که فقط از خط ساخته شده اعمال نشد.',
     matteLuma: 'Luma Matte به‌صورت Alpha Matte تبدیل شد و شفافیت بر اساس روشنایی از دست رفت.',
     matteSoft: 'یک Track Matte شفافیت جزئی یا گرادیان دارد؛ لبه‌های برش تیز است.',
     maskSoft: 'شفافیت و Expansion ماسک پشتیبانی نمی‌شود؛ لبه‌های ماسک تیز است.',

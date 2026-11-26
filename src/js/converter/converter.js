@@ -347,11 +347,11 @@ export function convert(json, opts = {}) {
             matte, restChain: mChain.slice(k), mapOf: () => ctx.map, inverted, bound: clipBound,
           });
           if (res.unsupported) {
-            warn(res.unsupported === 'stroke' ? 'matteStroke' : 'matteUnsupported');
+            warn('matteUnsupported');
           } else {
             if (L.tt === 3 || L.tt === 4) warn('matteLuma');
             if (res.flags.soft) warn('matteSoft');
-            if (res.flags.stroke) warn('matteStroke');
+            if (res.flags.multitrim) warn('multitrim');
             for (; start < k; start++) host = addTransform(host, chain[start].ks, ctx.map, chain[start].nm || 'layer');
             const wrap = node('group', uname((L.nm || 'layer') + '_matte'));
             host.children.push(wrap);
