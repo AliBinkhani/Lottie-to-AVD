@@ -4,6 +4,10 @@
 
 [English](README.md) | **فارسی**
 
+### 👈 [باز کردن مبدل: alibinkhani.github.io/Lottie-to-AVD](https://alibinkhani.github.io/Lottie-to-AVD/?lang=fa)
+
+[![Tests](https://github.com/AliBinkhani/Lottie-to-AVD/actions/workflows/test.yml/badge.svg)](https://github.com/AliBinkhani/Lottie-to-AVD/actions/workflows/test.yml)
+
 مبدلی تحت وب که انیمیشن‌های JSON لوتی ([Lottie](https://airbnb.io/lottie/)) را به فایل XML از نوع
 [`AnimatedVectorDrawable`](https://developer.android.com/reference/android/graphics/drawable/AnimatedVectorDrawable)
 اندروید تبدیل می‌کند. خروجی آماده‌ی قرار گرفتن در پوشه‌ی `res/drawable` است.

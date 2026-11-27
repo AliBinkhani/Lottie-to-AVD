@@ -2,6 +2,10 @@
 
 **English** | [فارسی](README.fa.md)
 
+### 👉 [Open the converter: alibinkhani.github.io/Lottie-to-AVD](https://alibinkhani.github.io/Lottie-to-AVD/)
+
+[![Tests](https://github.com/AliBinkhani/Lottie-to-AVD/actions/workflows/test.yml/badge.svg)](https://github.com/AliBinkhani/Lottie-to-AVD/actions/workflows/test.yml)
+
 A browser-based converter that turns [Lottie](https://airbnb.io/lottie/) JSON animations into Android
 [`AnimatedVectorDrawable`](https://developer.android.com/reference/android/graphics/drawable/AnimatedVectorDrawable)
 XML, ready to drop into `res/drawable`.
