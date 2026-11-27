@@ -1,0 +1,56 @@
+[
+  {
+    "name": "sample-basic",
+    "file": "samples/sample.json",
+    "frames": [0, 15, 30, 45],
+    "maxDiff": 2.0,
+    "maxAnimators": 20,
+    "warnings": []
+  },
+  {
+    "name": "sample-gradient",
+    "file": "samples/gradient.json",
+    "frames": [0, 30, 60],
+    "maxDiff": 2.0,
+    "maxAnimators": 8,
+    "warnings": []
+  },
+  {
+    "name": "sample-mattes",
+    "file": "samples/mattes.json",
+    "frames": [0, 15, 30, 45],
+    "maxDiff": 2.5,
+    "maxAnimators": 110,
+    "warnings": [
+      "3 properties have no direct AVD equivalent and were sampled into linear keyframes (the output is still vector)."
+    ]
+  },
+  {
+    "name": "precomp-timing",
+    "file": "tests/fixtures/precomp-timing.json",
+    "frames": [15, 35, 45, 60],
+    "maxDiff": 2.0,
+    "maxAnimators": 5,
+    "warnings": []
+  },
+  {
+    "name": "holes",
+    "file": "tests/fixtures/holes.json",
+    "frames": [0, 30, 59],
+    "maxDiff": 2.6,
+    "maxAnimators": 10,
+    "warnings": [
+      "1 property has no direct AVD equivalent and was sampled into linear keyframes (the output is still vector)."
+    ]
+  },
+  {
+    "name": "motion-path",
+    "file": "tests/fixtures/motion-path.json",
+    "frames": [10, 20, 40, 50],
+    "maxDiff": 2.6,
+    "maxAnimators": 135,
+    "warnings": [
+      "2 properties have no direct AVD equivalent and were sampled into linear keyframes (the output is still vector)."
+    ]
+  }
+]

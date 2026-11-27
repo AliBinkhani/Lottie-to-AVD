@@ -31,8 +31,8 @@
 # Python
 python3 -m http.server 8000
 
-# یا Node.js
-npx serve .
+# یا Node.js (بدون نیاز به نصب)
+node tests/server.mjs 8000
 ```
 
 </div>
@@ -110,7 +110,8 @@ avd.start()
 │       ├── i18n/               # i18n.js, locales/en.js, locales/fa.js
 │       └── ui/                 # app.js, download.js
 ├── assets/fonts/               # Vazirmatn, JetBrains Mono (+ OFL licences)
-└── vendor/lottie-web/          # lottie-web 5.12.2 light player (+ MIT licence)
+├── vendor/lottie-web/          # lottie-web 5.12.2 light player (+ MIT licence)
+└── tests/                      # run.mjs, server.mjs, cases.json, golden/, fixtures/
 ```
 
 </div>
@@ -122,6 +123,33 @@ avd.start()
 1. فایل `src/js/i18n/locales/en.js` را کپی کنید (مثلاً با نام `de.js`) و مقادیرش را ترجمه کنید.
 2. آن را با جهت متن و locale اعداد در `LOCALES` داخل `src/js/i18n/i18n.js` ثبت کنید.
 3. اگر بیش از دو زبان دارید، دکمه‌ی تغییر زبان در `src/js/ui/app.js` را هم به‌روز کنید.
+
+## تست‌ها
+
+تست‌های پسرفت هر نمونه و هر فایل تست را در Chromium بدون پنجره تبدیل می‌کنند و این‌ها را بررسی می‌کنند:
+
+1. **تطابق بصری**: نمای تفاوت خود برنامه (لوتی در برابر پیش‌نمایش AVD) در چند فریم. میانگین روشنایی پیکسل‌ها باید از `maxDiff` آن مورد کمتر باشد (صفر یعنی یکسان؛ لبه‌های anti-aliasing به‌تنهایی حدود ۱.۵ می‌دهند).
+2. **حجم**: تعداد `objectAnimator`ها باید از `maxAnimators` کمتر باشد.
+3. **هشدارها**: گزارش تبدیل باید با فهرست مورد انتظار یکی باشد.
+4. **خروجی**: XML باید با فایل مرجع در `tests/golden/` یکی باشد.
+
+<div dir="ltr">
+
+```bash
+npm install
+npx playwright install chromium   # first time only
+npm test                          # all cases
+npm test -- holes                 # cases whose name contains "holes"
+npm run test:update               # rewrite golden XML after an intended output change
+```
+
+</div>
+
+وقتی بررسی‌ای شکست بخورد، تصاویر تفاوت و XML واقعی در `tests/output/` ذخیره می‌شوند. تست‌ها روی هر Pull Request خودکار با GitHub Actions اجرا می‌شوند و در صورت شکست، همین فایل‌ها با نام `test-output` به اجرا پیوست می‌شوند.
+
+بررسی بصری با شبیه‌ساز AVD داخل مرورگر مقایسه می‌کند، نه با دستگاه اندروید واقعی؛ پس برای تغییرهای بزرگ‌تر تست روی دستگاه همچنان لازم است.
+
+برای افزودن یک مورد جدید، فایل لوتی را در `samples/` یا `tests/fixtures/` بگذارید، یک ورودی به `tests/cases.json` اضافه کنید، `npm run test:update` را اجرا کنید و فایل مرجع جدید را بررسی کنید.
 
 ## اجزای شخص ثالث
 

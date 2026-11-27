@@ -37,8 +37,8 @@ from `file://` URLs, so serve the folder with any static web server:
 # Python
 python3 -m http.server 8000
 
-# or Node.js
-npx serve .
+# or Node.js (no install needed)
+node tests/server.mjs 8000
 ```
 
 Then open <http://localhost:8000>.
@@ -127,7 +127,13 @@ report lists any that were found:
 │           ├── app.js          # UI wiring and playback loop
 │           └── download.js     # Download / clipboard helpers
 ├── assets/fonts/               # Vazirmatn, JetBrains Mono (+ OFL licences)
-└── vendor/lottie-web/          # lottie-web 5.12.2 light player (+ MIT licence)
+├── vendor/lottie-web/          # lottie-web 5.12.2 light player (+ MIT licence)
+└── tests/
+    ├── run.mjs                 # Regression test runner (Playwright + Chromium)
+    ├── server.mjs              # Static server used by the tests and `npm start`
+    ├── cases.json              # Test cases and their limits
+    ├── golden/                 # Expected XML output per case
+    └── fixtures/               # Test-only Lottie files (+ generate.mjs)
 ```
 
 ### Adding a language
@@ -135,6 +141,35 @@ report lists any that were found:
 1. Copy `src/js/i18n/locales/en.js` to a new file, for example `de.js`, and translate the values.
 2. Register it in `LOCALES` in `src/js/i18n/i18n.js` with its text direction and number locale.
 3. Update the language switch button in `src/js/ui/app.js` if there are more than two languages.
+
+## Tests
+
+The regression tests convert each sample and test fixture in headless Chromium and check:
+
+1. **Visual match**: the app's difference view (Lottie vs. the AVD preview) at several frames.
+   The mean pixel value must stay below the case's `maxDiff` (0 means identical; anti-aliased
+   edges alone give about 1.5).
+2. **Size**: the number of `objectAnimator`s must stay below `maxAnimators`.
+3. **Warnings**: the conversion report must match the expected list.
+4. **Output**: the XML must match the golden file in `tests/golden/`.
+
+```bash
+npm install
+npx playwright install chromium   # first time only
+npm test                          # all cases
+npm test -- holes                 # cases whose name contains "holes"
+npm run test:update               # rewrite golden XML after an intended output change
+```
+
+When a check fails, the difference images and the actual XML are saved in `tests/output/`.
+The tests run automatically on every pull request through GitHub Actions; on failure those files
+are attached to the run as the `test-output` artifact.
+
+The visual check compares against the in-browser AVD emulator, not a real Android device, so
+testing on a device is still worthwhile for larger changes.
+
+To add a case, put a Lottie file in `samples/` or `tests/fixtures/`, add an entry to
+`tests/cases.json`, then run `npm run test:update` and review the new golden file.
 
 ## Third-party components
 
