@@ -13,7 +13,8 @@
  */
 import { fmt, fmtVal, setPrecision, getPrecision } from '../core/format.js';
 import { isAnim, nv, getSegs, segEase, propAt } from '../lottie/properties.js';
-import { shapeToD, geomD } from '../lottie/geometry.js';
+import { shapeToD, geomD, geomShape } from '../lottie/geometry.js';
+import { reverseShape } from '../lottie/transform.js';
 import { gradientAt, isGradientAnimated, hasHighlight, firstGradientColor } from '../lottie/gradient.js';
 import { mapT, unmap, constTrack, numTrack, offsetTrack, prodTrack, colorTrack } from './tracks.js';
 import { writeXml } from './xml-writer.js';
@@ -206,12 +207,60 @@ export function convert(json, opts = {}) {
     }
   }
 
+  /**
+   * Path data for several shapes painted by one style, as one path (so the
+   * fill rule can cut holes, like Lottie). A parametric shape drawn
+   * counter-clockwise (d = 3) is reversed so non-zero holes still work.
+   */
+  function combinedGeomTrack(items, map) {
+    const tracks = items.map(item => {
+      if (item.ty === 'sh' || item.d !== 3) return geomTrack(item, map);
+      const props = [item.p, item.s, item.r, item.or, item.ir, item.pt].filter(Boolean);
+      const at = f => shapeToD(reverseShape(geomShape(item, unmap(map, f))));
+      if (!props.some(isAnim)) return constTrack(at(ip), 'pathType');
+      return { type: 'pathType', animated: true, at, exact: () => null };
+    });
+    const join = parts => parts.join(' ');
+    const anim = tracks.filter(t => t.animated);
+    if (!anim.length) return constTrack(join(tracks.map(t => t.at(ip))), 'pathType');
+    return {
+      type: 'pathType',
+      animated: true,
+      at: f => join(tracks.map(t => t.at(f))),
+      exact() {
+        // Exact when a single shape animates: its keyframes, with the others fixed around it.
+        if (anim.length > 1) return null;
+        const ex = anim[0].exact();
+        if (!ex) return null;
+        const fixed = tracks.map(t => (t.animated ? null : t.at(ip)));
+        const withValue = v => join(fixed.map(x => (x == null ? v : x)));
+        return ex.map(sg => Object.assign({}, sg, { v0: withValue(sg.v0), v1: withValue(sg.v1) }));
+      },
+    };
+  }
+
+  /**
+   * Groups the shapes a style paints into paths: shapes that share the same
+   * group chain become one path; shapes with Trim Paths stay separate, since
+   * trims apply to each shape.
+   */
+  function groupGeoms(geoms) {
+    const out = [];
+    for (const g of geoms) {
+      if (g.trims.length) { out.push(g); continue; }
+      const same = out.find(o => !o.trims.length && o.chain.length === g.chain.length && o.chain.every((c, k) => c.tr === g.chain[k].tr));
+      if (same) (same.geoms = same.geoms || [same.geom]).push(g.geom);
+      else out.push(Object.assign({}, g));
+    }
+    return out;
+  }
+
   function emitPath(host, style, g, ctx) {
     let h = host;
     for (const c of g.chain) h = addTransform(h, c.tr, ctx.map, c.nm || 'group');
     const p = node('path', uname(style.nm || g.geom.nm || 'path'));
     h.children.push(p);
-    p.tracks.pathData = geomTrack(g.geom, ctx.map);
+    p.tracks.pathData = g.geoms && g.geoms.length > 1 ? combinedGeomTrack(g.geoms, ctx.map) : geomTrack(g.geom, ctx.map);
     const alpha = prodTrack(ctx.alpha.concat([numTrack(style.o, ctx.map, 0, 'num', v => v / 100, 100)]));
     const isFill = style.ty === 'fl' || style.ty === 'gf';
     const isGradient = style.ty === 'gf' || style.ty === 'gs';
@@ -261,7 +310,7 @@ export function convert(json, opts = {}) {
         const geoms = [];
         collectGeoms(list, i, [], geoms);
         const c2 = Object.assign({}, ctx, { geomCount: geoms.length });
-        for (const g of geoms) emitPath(host, it, g, c2);
+        for (const g of groupGeoms(geoms)) emitPath(host, it, g, c2);
       } else if (it.ty === 'gr') {
         const tr = (it.it || []).find(x => x && x.ty === 'tr');
         const g = addTransform(host, tr, ctx.map, it.nm || 'group');
