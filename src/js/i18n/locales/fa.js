@@ -1,6 +1,7 @@
 export default {
   meta: {
-    title: 'تبدیل Lottie به AnimatedVectorDrawable',
+    title: 'تبدیل Lottie به AnimatedVectorDrawable – مبدل آنلاین و رایگان برای اندروید',
+    description: 'مبدل آنلاین و رایگان انیمیشن‌های Lottie (JSON) به AnimatedVectorDrawable (AVD) اندروید. پشتیبانی از شکل‌ها، گرادیان، Track Matte، ماسک و Trim Path با پیش‌نمایش زنده‌ی کنار هم. همه‌چیز در مرورگر خودتان اجرا می‌شود.',
     switchTo: 'English',
     switchLabel: 'Switch language to English',
   },

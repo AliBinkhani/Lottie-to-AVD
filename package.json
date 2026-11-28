@@ -7,7 +7,8 @@
     "start": "node tests/server.mjs 8000",
     "test": "node tests/run.mjs",
     "test:update": "node tests/run.mjs --update",
-    "fixtures": "node tests/fixtures/generate.mjs"
+    "fixtures": "node tests/fixtures/generate.mjs",
+    "icons": "node scripts/build-icons.mjs"
   },
   "devDependencies": {
     "playwright": "1.63.0"

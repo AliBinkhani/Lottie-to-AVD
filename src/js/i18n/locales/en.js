@@ -1,6 +1,7 @@
 export default {
   meta: {
-    title: 'Lottie to AnimatedVectorDrawable',
+    title: 'Lottie to AnimatedVectorDrawable – free online converter for Android',
+    description: 'Free online converter from Lottie JSON animations to Android AnimatedVectorDrawable (AVD) XML. Supports shapes, gradients, track mattes, masks and trim paths, with a live side-by-side preview. Runs entirely in your browser.',
     switchTo: 'فارسی',
     switchLabel: 'تغییر زبان به فارسی',
   },

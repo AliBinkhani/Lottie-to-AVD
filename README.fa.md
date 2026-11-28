@@ -1,5 +1,7 @@
 <div dir="rtl">
 
+<img src="assets/icons/favicon.svg" alt="" width="72" height="72">
+
 # Lottie → AnimatedVectorDrawable
 
 [English](README.md) | **فارسی**
@@ -97,7 +99,9 @@ avd.start()
 
 ```
 .
-├── index.html                  # Page markup (text comes from i18n keys)
+├── index.html                  # Page markup (text comes from i18n keys), SEO meta tags
+├── manifest.webmanifest        # Web app manifest (name, icons)
+├── sitemap.xml                 # Sitemap for search engines
 ├── samples/
 │   ├── sample.json             # Demo: basic shapes, morph, trim path
 │   ├── gradient.json           # Demo: linear/radial gradient fills and strokes
@@ -114,6 +118,8 @@ avd.start()
 │       ├── i18n/               # i18n.js, locales/en.js, locales/fa.js
 │       └── ui/                 # app.js, download.js
 ├── assets/fonts/               # Vazirmatn, JetBrains Mono (+ OFL licences)
+├── assets/icons/               # favicon.svg (source) + generated PNG/ICO and og-image.png
+├── scripts/build-icons.mjs     # npm run icons: renders the icons from favicon.svg
 ├── vendor/lottie-web/          # lottie-web 5.12.2 light player (+ MIT licence)
 └── tests/                      # run.mjs, server.mjs, cases.json, golden/, fixtures/
 ```
