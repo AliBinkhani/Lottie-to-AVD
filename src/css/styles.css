@@ -118,3 +118,4 @@ code.inl{font-family:var(--mono);font-size:.9em;background:var(--surface-2);padd
 .sample-row{display:flex;justify-content:center;gap:8px;max-width:100%}
 .sample-row select{flex:0 1 auto;min-width:0}
 .sample-row button{flex:none}
+header.top h1 .logo{width:1.25em;height:1.25em;vertical-align:-.28em;margin-inline-end:.4em;border-radius:22%}

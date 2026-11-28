@@ -1,3 +1,5 @@
+<img src="assets/icons/favicon.svg" alt="" width="72" height="72">
+
 # Lottie → AnimatedVectorDrawable
 
 **English** | [فارسی](README.fa.md)
@@ -99,7 +101,9 @@ report lists any that were found:
 
 ```
 .
-├── index.html                  # Page markup (text comes from i18n keys)
+├── index.html                  # Page markup (text comes from i18n keys), SEO meta tags
+├── manifest.webmanifest        # Web app manifest (name, icons)
+├── sitemap.xml                 # Sitemap for search engines
 ├── samples/
 │   ├── sample.json             # Demo: basic shapes, morph, trim path
 │   ├── gradient.json           # Demo: linear/radial gradient fills and strokes
@@ -131,6 +135,8 @@ report lists any that were found:
 │           ├── app.js          # UI wiring and playback loop
 │           └── download.js     # Download / clipboard helpers
 ├── assets/fonts/               # Vazirmatn, JetBrains Mono (+ OFL licences)
+├── assets/icons/               # favicon.svg (source) + generated PNG/ICO and og-image.png
+├── scripts/build-icons.mjs     # npm run icons: renders the icons from favicon.svg
 ├── vendor/lottie-web/          # lottie-web 5.12.2 light player (+ MIT licence)
 └── tests/
     ├── run.mjs                 # Regression test runner (Playwright + Chromium)

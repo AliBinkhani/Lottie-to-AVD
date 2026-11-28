@@ -73,6 +73,10 @@ export function setLang(next, { persist = true } = {}) {
   html.lang = next;
   html.dir = LOCALES[next].dir;
   document.title = t('meta.title');
+  const description = document.querySelector('meta[name="description"]');
+  if (description) description.content = t('meta.description');
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) canonical.href = canonical.href.split('?')[0] + (next === DEFAULT_LANG ? '' : `?lang=${next}`);
   if (persist) {
     try { localStorage.setItem(STORAGE_KEY, next); } catch (e) { /* ignore */ }
   }

@@ -3,8 +3,48 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Convert Lottie JSON animations to Android AnimatedVectorDrawable XML in the browser.">
-<title>Lottie to AnimatedVectorDrawable</title>
+<title>Lottie to AnimatedVectorDrawable – free online converter for Android</title>
+<meta name="description" content="Free online converter from Lottie JSON animations to Android AnimatedVectorDrawable (AVD) XML. Supports shapes, gradients, track mattes, masks and trim paths, with a live side-by-side preview. Runs entirely in your browser.">
+<meta name="keywords" content="Lottie, AnimatedVectorDrawable, AVD, Android, vector drawable, animation, converter, After Effects, Bodymovin">
+<meta name="theme-color" content="#1B7F5A">
+<link rel="canonical" href="https://alibinkhani.github.io/Lottie-to-AVD/">
+<link rel="alternate" hreflang="en" href="https://alibinkhani.github.io/Lottie-to-AVD/">
+<link rel="alternate" hreflang="fa" href="https://alibinkhani.github.io/Lottie-to-AVD/?lang=fa">
+<link rel="alternate" hreflang="x-default" href="https://alibinkhani.github.io/Lottie-to-AVD/">
+<link rel="icon" href="assets/icons/favicon.ico" sizes="48x48">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Lottie → AVD">
+<meta property="og:title" content="Lottie to AnimatedVectorDrawable converter">
+<meta property="og:description" content="Convert Lottie JSON animations to Android AnimatedVectorDrawable XML, right in the browser, with a live side-by-side preview.">
+<meta property="og:url" content="https://alibinkhani.github.io/Lottie-to-AVD/">
+<meta property="og:image" content="https://alibinkhani.github.io/Lottie-to-AVD/assets/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Lottie to AnimatedVectorDrawable converter">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="fa_IR">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Lottie to AnimatedVectorDrawable",
+  "alternateName": "Lottie to AVD",
+  "url": "https://alibinkhani.github.io/Lottie-to-AVD/",
+  "description": "Free online converter from Lottie JSON animations to Android AnimatedVectorDrawable XML, with a live preview. Runs entirely in the browser.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any (web browser)",
+  "browserRequirements": "Requires JavaScript",
+  "inLanguage": ["en", "fa"],
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "image": "https://alibinkhani.github.io/Lottie-to-AVD/assets/icons/icon-512.png",
+  "codeRepository": "https://github.com/AliBinkhani/Lottie-to-AVD"
+}
+</script>
 <link rel="stylesheet" href="src/css/fonts.css">
 <link rel="stylesheet" href="src/css/styles.css">
 <script src="vendor/lottie-web/lottie_light.min.js" defer></script>
@@ -15,7 +55,7 @@
   <header class="top">
     <div class="top-bar">
       <div class="titles">
-        <h1><bdi dir="ltr">Lottie <span class="arrow">→</span> AnimatedVectorDrawable</bdi></h1>
+        <h1><img class="logo" src="assets/icons/favicon.svg" alt="" width="40" height="40"><bdi dir="ltr">Lottie <span class="arrow">→</span> AnimatedVectorDrawable</bdi></h1>
         <p data-i18n-html="header.subtitle"></p>
       </div>
       <button type="button" id="langBtn" class="lang-switch" data-i18n="meta.switchTo" data-i18n-attr="aria-label:meta.switchLabel"></button>
