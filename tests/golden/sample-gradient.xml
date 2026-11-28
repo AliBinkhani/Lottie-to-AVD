@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector android:width="120dp"
+            android:height="120dp"
+            android:viewportWidth="200"
+            android:viewportHeight="200">
+            <group android:name="card_1"
+                android:translateX="100"
+                android:translateY="100">
+                <path android:name="Linear_3"
+                    android:pathData="M92,-64 L92,64 C92,79.464 79.464,92 64,92 L-64,92 C-79.464,92 -92,79.464 -92,64 L-92,-64 C-92,-79.464 -79.464,-92 -64,-92 L64,-92 C79.464,-92 92,-79.464 92,-64 Z">
+                    <aapt:attr name="android:fillColor">
+                        <gradient android:type="linear"
+                            android:startX="-92"
+                            android:startY="-92"
+                            android:endX="92"
+                            android:endY="92"
+                            android:tileMode="clamp">
+                            <item android:offset="0"
+                                android:color="#FF1C2133" />
+                            <item android:offset="1"
+                                android:color="#FF33295C" />
+                        </gradient>
+                    </aapt:attr>
+                </path>
+            </group>
+            <group android:name="ring_4"
+                android:rotation="0"
+                android:translateX="100"
+                android:translateY="100">
+                <path android:name="Gradient_Stroke_6"
+                    android:pathData="M0,-70 C38.66,-70 70,-38.66 70,0 C70,38.66 38.66,70 0,70 C-38.66,70 -70,38.66 -70,0 C-70,-38.66 -38.66,-70 0,-70 Z"
+                    android:strokeWidth="12"
+                    android:strokeLineCap="round"
+                    android:strokeLineJoin="round"
+                    android:trimPathEnd="0.2">
+                    <aapt:attr name="android:strokeColor">
+                        <gradient android:type="linear"
+                            android:startX="-70"
+                            android:startY="0"
+                            android:endX="70"
+                            android:endY="0"
+                            android:tileMode="clamp">
+                            <item android:offset="0"
+                                android:color="#FF5C45E8" />
+                            <item android:offset="0.5"
+                                android:color="#FF269EDB" />
+                            <item android:offset="1"
+                                android:color="#FF1F9E6B" />
+                        </gradient>
+                    </aapt:attr>
+                </path>
+            </group>
+            <group android:name="orb_7"
+                android:scaleX="0.8"
+                android:scaleY="0.8"
+                android:translateX="100"
+                android:translateY="100">
+                <path android:name="Radial_9"
+                    android:pathData="M0,-35 C19.33,-35 35,-19.33 35,0 C35,19.33 19.33,35 0,35 C-19.33,35 -35,19.33 -35,0 C-35,-19.33 -19.33,-35 0,-35 Z">
+                    <aapt:attr name="android:fillColor">
+                        <gradient android:type="radial"
+                            android:centerX="0"
+                            android:centerY="0"
+                            android:gradientRadius="35"
+                            android:tileMode="clamp">
+                            <item android:offset="0"
+                                android:color="#FFFFD966" />
+                            <item android:offset="0.6"
+                                android:color="#FFF98C57" />
+                            <item android:offset="1"
+                                android:color="#00F5594D" />
+                        </gradient>
+                    </aapt:attr>
+                </path>
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="ring_4">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="rotation"
+                    android:duration="3000"
+                    android:valueFrom="0"
+                    android:valueTo="360"
+                    android:valueType="floatType">
+                    <aapt:attr name="android:interpolator">
+                        <pathInterpolator android:controlX1="0.4"
+                            android:controlY1="0"
+                            android:controlX2="0.6"
+                            android:controlY2="1" />
+                    </aapt:attr>
+                </objectAnimator>
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="Gradient_Stroke_6">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="trimPathEnd"
+                    android:duration="1500"
+                    android:valueFrom="0.2"
+                    android:valueTo="0.85"
+                    android:valueType="floatType">
+                    <aapt:attr name="android:interpolator">
+                        <pathInterpolator android:controlX1="0.5"
+                            android:controlY1="0"
+                            android:controlX2="0.5"
+                            android:controlY2="1" />
+                    </aapt:attr>
+                </objectAnimator>
+                <objectAnimator android:propertyName="trimPathEnd"
+                    android:startOffset="1500"
+                    android:duration="1500"
+                    android:valueFrom="0.85"
+                    android:valueTo="0.2"
+                    android:valueType="floatType">
+                    <aapt:attr name="android:interpolator">
+                        <pathInterpolator android:controlX1="0.5"
+                            android:controlY1="0"
+                            android:controlX2="0.5"
+                            android:controlY2="1" />
+                    </aapt:attr>
+                </objectAnimator>
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="orb_7">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="scaleX"
+                    android:duration="1500"
+                    android:valueFrom="0.8"
+                    android:valueTo="1.1"
+                    android:valueType="floatType">
+                    <aapt:attr name="android:interpolator">
+                        <pathInterpolator android:controlX1="0.5"
+                            android:controlY1="0"
+                            android:controlX2="0.5"
+                            android:controlY2="1" />
+                    </aapt:attr>
+                </objectAnimator>
+                <objectAnimator android:propertyName="scaleX"
+                    android:startOffset="1500"
+                    android:duration="1500"
+                    android:valueFrom="1.1"
+                    android:valueTo="0.8"
+                    android:valueType="floatType">
+                    <aapt:attr name="android:interpolator">
+                        <pathInterpolator android:controlX1="0.5"
+                            android:controlY1="0"
+                            android:controlX2="0.5"
+                            android:controlY2="1" />
+                    </aapt:attr>
+                </objectAnimator>
+                <objectAnimator android:propertyName="scaleY"
+                    android:duration="1500"
+                    android:valueFrom="0.8"
+                    android:valueTo="1.1"
+                    android:valueType="floatType">
+                    <aapt:attr name="android:interpolator">
+                        <pathInterpolator android:controlX1="0.5"
+                            android:controlY1="0"
+                            android:controlX2="0.5"
+                            android:controlY2="1" />
+                    </aapt:attr>
+                </objectAnimator>
+                <objectAnimator android:propertyName="scaleY"
+                    android:startOffset="1500"
+                    android:duration="1500"
+                    android:valueFrom="1.1"
+                    android:valueTo="0.8"
+                    android:valueType="floatType">
+                    <aapt:attr name="android:interpolator">
+                        <pathInterpolator android:controlX1="0.5"
+                            android:controlY1="0"
+                            android:controlX2="0.5"
+                            android:controlY2="1" />
+                    </aapt:attr>
+                </objectAnimator>
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

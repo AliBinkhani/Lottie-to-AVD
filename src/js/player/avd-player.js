@@ -184,12 +184,18 @@ export class AVDPlayer {
     svg.appendChild(defs);
     let gradCount = 0;
 
+    let clipCount = 0;
+
+    // A <clip-path> clips the siblings after it, so each one opens a new
+    // clipped <g> that the following siblings are added to.
     const build = (el, parentSvg) => {
+      let container = parentSvg;
       for (const c of kidsOf(el)) {
-        if (c.localName !== 'group' && c.localName !== 'path') continue;
+        const tag = c.localName;
+        if (tag !== 'group' && tag !== 'path' && tag !== 'clip-path') continue;
         const n = {
-          tag: c.localName, base: {}, anims: {}, last: {},
-          el: document.createElementNS(SVG_NS, c.localName === 'group' ? 'g' : 'path'),
+          tag, base: {}, anims: {}, last: {},
+          el: document.createElementNS(SVG_NS, tag === 'group' ? 'g' : 'path'),
         };
         for (const a of Array.from(c.attributes)) {
           if (a.name.startsWith('xmlns')) continue;
@@ -207,10 +213,22 @@ export class AVDPlayer {
             n.gradients[attr] = 'url(#' + id + ')';
           }
         }
-        parentSvg.appendChild(n.el);
+        if (tag === 'clip-path') {
+          const id = this.uid + '-c' + (++clipCount);
+          const cp = document.createElementNS(SVG_NS, 'clipPath');
+          cp.setAttribute('id', id);
+          cp.appendChild(n.el);
+          defs.appendChild(cp);
+          const g = document.createElementNS(SVG_NS, 'g');
+          g.setAttribute('clip-path', 'url(#' + id + ')');
+          container.appendChild(g);
+          container = g;
+        } else {
+          container.appendChild(n.el);
+        }
         this.nodes.push(n);
         if (n.base.name) byName.set(n.base.name, n);
-        if (c.localName === 'group') build(c, n.el);
+        if (tag === 'group') build(c, n.el);
       }
     };
     build(vec, svg);
@@ -293,6 +311,7 @@ export class AVDPlayer {
       }
       const d = this.value(n, 'pathData', ms, 'pathType');
       this.set(n, 'd', d ? d.s : null);
+      if (n.tag === 'clip-path') continue;
 
       const grad = n.gradients || {};
       const fc = this.value(n, 'fillColor', ms, 'colorType');

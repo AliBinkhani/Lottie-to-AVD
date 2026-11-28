@@ -60,9 +60,33 @@ export function segEase(sg, d) {
   return sg.ease[d];
 }
 
+/**
+ * True if a position segment follows a curved motion path.
+ *
+ * Tangents that lie on the straight line between the two keyframes, without
+ * overshooting it, describe a straight path; moving along it by arc length
+ * is then exactly linear interpolation, so it is not treated as spatial.
+ * (After Effects often stores straight motion like that.)
+ */
 export function hasSpatial(sg) {
+  if (sg.spatial !== undefined) return sg.spatial;
   const nz = a => Array.isArray(a) && a.some(v => Math.abs(v) > 1e-6);
-  return nz(sg.kf.to) || nz(sg.kf.ti);
+  const to = sg.kf.to, ti = sg.kf.ti;
+  if (!nz(to) && !nz(ti)) return (sg.spatial = false);
+  const a = nv(sg.v0), b = nv(sg.v1);
+  const d = [(b[0] || 0) - (a[0] || 0), (b[1] || 0) - (a[1] || 0)];
+  const dd = d[0] * d[0] + d[1] * d[1];
+  if (dd < 1e-12) return (sg.spatial = true); // a loop: really curved
+  const onLine = t => {
+    if (!Array.isArray(t)) return true;
+    const tx = t[0] || 0, ty = t[1] || 0;
+    const cross = tx * d[1] - ty * d[0];
+    return Math.abs(cross) <= 1e-3 * Math.sqrt((tx * tx + ty * ty) * dd) + 1e-9;
+  };
+  const u1 = Array.isArray(to) ? ((to[0] || 0) * d[0] + (to[1] || 0) * d[1]) / dd : 0;
+  const u2 = 1 + (Array.isArray(ti) ? ((ti[0] || 0) * d[0] + (ti[1] || 0) * d[1]) / dd : 0);
+  const inside = u => u >= -1e-6 && u <= 1 + 1e-6;
+  return (sg.spatial = !(onLine(to) && onLine(ti) && inside(u1) && inside(u2)));
 }
 
 /** Position along a spatial (curved) motion path, parametrised by arc length. */

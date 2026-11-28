@@ -1,0 +1,18 @@
+{
+  "name": "lottie-to-avd",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser-based converter from Lottie JSON to Android AnimatedVectorDrawable XML",
+  "scripts": {
+    "start": "node tests/server.mjs 8000",
+    "test": "node tests/run.mjs",
+    "test:update": "node tests/run.mjs --update",
+    "fixtures": "node tests/fixtures/generate.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

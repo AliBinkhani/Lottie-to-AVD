@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector android:width="120dp"
+            android:height="120dp"
+            android:viewportWidth="100"
+            android:viewportHeight="100">
+            <group android:name="late_opacity_1"
+                android:translateX="20"
+                android:translateY="20">
+                <path android:name="path_3"
+                    android:pathData="M20,-20 L20,20 C20,20 20,20 20,20 L-20,20 C-20,20 -20,20 -20,20 L-20,-20 C-20,-20 -20,-20 -20,-20 L20,-20 C20,-20 20,-20 20,-20 Z"
+                    android:fillColor="#FF4D33"
+                    android:fillAlpha="0" />
+            </group>
+            <group android:name="layer_visibility_4"
+                android:scaleX="0">
+                <group android:name="layer_5"
+                    android:pivotX="50"
+                    android:pivotY="50">
+                    <group android:name="spinner_visibility_6"
+                        android:scaleX="0">
+                        <group android:name="spinner_7"
+                            android:rotation="0"
+                            android:translateX="50"
+                            android:translateY="50">
+                            <path android:name="path_9"
+                                android:pathData="M20,-20 L20,20 C20,20 20,20 20,20 L-20,20 C-20,20 -20,20 -20,20 L-20,-20 C-20,-20 -20,-20 -20,-20 L20,-20 C20,-20 20,-20 20,-20 Z"
+                                android:fillColor="#0099FF" />
+                        </group>
+                    </group>
+                </group>
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="path_3">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="fillAlpha"
+                    android:startOffset="333"
+                    android:duration="1334"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="layer_visibility_4">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="scaleX"
+                    android:startOffset="1000"
+                    android:duration="0"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="spinner_visibility_6">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="scaleX"
+                    android:startOffset="1000"
+                    android:duration="0"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="spinner_7">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="rotation"
+                    android:startOffset="1000"
+                    android:duration="1000"
+                    android:valueFrom="0"
+                    android:valueTo="90"
+                    android:valueType="floatType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

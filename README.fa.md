@@ -4,6 +4,10 @@
 
 [English](README.md) | **فارسی**
 
+### 👈 [باز کردن مبدل: alibinkhani.github.io/Lottie-to-AVD](https://alibinkhani.github.io/Lottie-to-AVD/?lang=fa)
+
+[![Tests](https://github.com/AliBinkhani/Lottie-to-AVD/actions/workflows/test.yml/badge.svg)](https://github.com/AliBinkhani/Lottie-to-AVD/actions/workflows/test.yml)
+
 مبدلی تحت وب که انیمیشن‌های JSON لوتی ([Lottie](https://airbnb.io/lottie/)) را به فایل XML از نوع
 [`AnimatedVectorDrawable`](https://developer.android.com/reference/android/graphics/drawable/AnimatedVectorDrawable)
 اندروید تبدیل می‌کند. خروجی آماده‌ی قرار گرفتن در پوشه‌ی `res/drawable` است.
@@ -12,8 +16,9 @@
 
 ## ویژگی‌ها
 
-- **تبدیل**: لایه‌های Shape، Solid و Precomp، والد‌گذاری لایه‌ها، گروه‌ها، Transformها (جابه‌جایی، چرخش، مقیاس و Anchor Point)، Fill و Stroke، گرادیان‌های خطی و شعاعی، Trim Path و شکل‌های بیضی، مستطیل و ستاره.
+- **تبدیل**: لایه‌های Shape، Solid و Precomp، والد‌گذاری لایه‌ها، گروه‌ها، Transformها (جابه‌جایی، چرخش، مقیاس و Anchor Point)، Fill و Stroke، گرادیان‌های خطی و شعاعی، Trim Path، شکل‌های بیضی، مستطیل و ستاره، و Track Matte و ماسک (به‌صورت `<clip-path>`).
 - **زمان‌بندی دقیق**: کی‌فریم‌ها به `objectAnimator` و منحنی‌های easing لوتی به `pathInterpolator` تبدیل می‌شوند. ویژگی‌هایی که معادل مستقیم در AVD ندارند با نمونه‌برداری به کی‌فریم‌های خطی تبدیل می‌شوند و خروجی همچنان کاملاً برداری می‌ماند.
+- **خروجی فشرده**: هر جا ممکن باشد انیماتور دقیق ساخته می‌شود (مسیرهای حرکت صاف، تغییرهای پله‌ای مثل نقطه‌ی ورود و خروج لایه)، گروه‌های والد بین لایه‌ها مشترک‌اند، هر لایه فقط یک انیماتور نمایش/پنهان دارد و ویژگی‌های نمونه‌برداری‌شده با دقتی کمتر از یک پیکسل ساده می‌شوند.
 - **مقایسه‌ی زنده**: لوتی اصلی (با lottie-web) و AVD تولیدشده (با شبیه‌ساز داخلی) کنار هم یا روی هم با حالت ترکیب Difference پخش می‌شوند.
 - **گزارش تبدیل**: موارد پشتیبانی‌نشده مثل ماسک، Matte، متن، تصویر، گرادیان، خط‌چین و Expression را فهرست می‌کند.
 - **خروجی قابل ویرایش**: XML را ویرایش کنید، دوباره در پیش‌نمایش اجرا کنید و بعد کپی یا دانلود کنید.
@@ -30,8 +35,8 @@
 # Python
 python3 -m http.server 8000
 
-# یا Node.js
-npx serve .
+# یا Node.js (بدون نیاز به نصب)
+node tests/server.mjs 8000
 ```
 
 </div>
@@ -71,7 +76,10 @@ avd.start()
 
 | ویژگی | رفتار |
 | --- | --- |
-| ماسک و Track Matte | نادیده گرفته می‌شود و لایه بدون ماسک رسم می‌شود |
+| Luma Matte | به‌صورت Alpha Matte تبدیل می‌شود |
+| مت و ماسک نرم (شفافیت جزئی، گرادیان، Feather، Expansion) | با لبه‌ی تیز برش می‌خورد |
+| Track Matte ساخته‌شده از خط (Stroke) | به چندضلعی دورخط تبدیل می‌شود؛ اتصال‌های گرد و Bevel تقریبی‌اند |
+| حالت‌های ماسک به‌جز Add و پس از آن Subtract یا Intersect (مثلاً Add بعد از Subtract، Lighten، Difference) | تقریبی تبدیل می‌شود |
 | لایه‌های متن و تصویر | حذف می‌شوند (متن را در After Effects به Shape تبدیل کنید) |
 | گرادیان متحرک | با فریم اولش تبدیل می‌شود (AVD گرادیان را انیمیت نمی‌کند) |
 | Highlight گرادیان شعاعی | نادیده گرفته می‌شود و گرادیان از مرکز رسم می‌شود |
@@ -92,20 +100,22 @@ avd.start()
 ├── index.html                  # Page markup (text comes from i18n keys)
 ├── samples/
 │   ├── sample.json             # Demo: basic shapes, morph, trim path
-│   └── gradient.json           # Demo: linear/radial gradient fills and strokes
+│   ├── gradient.json           # Demo: linear/radial gradient fills and strokes
+│   └── mattes.json             # Demo: alpha / inverted mattes and masks
 ├── src/
 │   ├── css/
 │   │   ├── fonts.css           # Self-hosted @font-face rules
 │   │   └── styles.css          # Theme tokens (light/dark) and layout
 │   └── js/
 │       ├── core/               # math.js, format.js
-│       ├── lottie/             # properties.js, geometry.js, gradient.js
-│       ├── converter/          # tracks.js, converter.js, xml-writer.js
+│       ├── lottie/             # properties.js, geometry.js, gradient.js, transform.js
+│       ├── converter/          # tracks.js, clipping.js, converter.js, xml-writer.js
 │       ├── player/             # avd-player.js
 │       ├── i18n/               # i18n.js, locales/en.js, locales/fa.js
 │       └── ui/                 # app.js, download.js
 ├── assets/fonts/               # Vazirmatn, JetBrains Mono (+ OFL licences)
-└── vendor/lottie-web/          # lottie-web 5.12.2 light player (+ MIT licence)
+├── vendor/lottie-web/          # lottie-web 5.12.2 light player (+ MIT licence)
+└── tests/                      # run.mjs, server.mjs, cases.json, golden/, fixtures/
 ```
 
 </div>
@@ -117,6 +127,33 @@ avd.start()
 1. فایل `src/js/i18n/locales/en.js` را کپی کنید (مثلاً با نام `de.js`) و مقادیرش را ترجمه کنید.
 2. آن را با جهت متن و locale اعداد در `LOCALES` داخل `src/js/i18n/i18n.js` ثبت کنید.
 3. اگر بیش از دو زبان دارید، دکمه‌ی تغییر زبان در `src/js/ui/app.js` را هم به‌روز کنید.
+
+## تست‌ها
+
+تست‌های پسرفت هر نمونه و هر فایل تست را در Chromium بدون پنجره تبدیل می‌کنند و این‌ها را بررسی می‌کنند:
+
+1. **تطابق بصری**: نمای تفاوت خود برنامه (لوتی در برابر پیش‌نمایش AVD) در چند فریم. میانگین روشنایی پیکسل‌ها باید از `maxDiff` آن مورد کمتر باشد (صفر یعنی یکسان؛ لبه‌های anti-aliasing به‌تنهایی حدود ۱.۵ می‌دهند).
+2. **حجم**: تعداد `objectAnimator`ها باید از `maxAnimators` کمتر باشد.
+3. **هشدارها**: گزارش تبدیل باید با فهرست مورد انتظار یکی باشد.
+4. **خروجی**: XML باید با فایل مرجع در `tests/golden/` یکی باشد.
+
+<div dir="ltr">
+
+```bash
+npm install
+npx playwright install chromium   # first time only
+npm test                          # all cases
+npm test -- holes                 # cases whose name contains "holes"
+npm run test:update               # rewrite golden XML after an intended output change
+```
+
+</div>
+
+وقتی بررسی‌ای شکست بخورد، تصاویر تفاوت و XML واقعی در `tests/output/` ذخیره می‌شوند. تست‌ها روی هر Pull Request خودکار با GitHub Actions اجرا می‌شوند و در صورت شکست، همین فایل‌ها با نام `test-output` به اجرا پیوست می‌شوند.
+
+بررسی بصری با شبیه‌ساز AVD داخل مرورگر مقایسه می‌کند، نه با دستگاه اندروید واقعی؛ پس برای تغییرهای بزرگ‌تر تست روی دستگاه همچنان لازم است.
+
+برای افزودن یک مورد جدید، فایل لوتی را در `samples/` یا `tests/fixtures/` بگذارید، یک ورودی به `tests/cases.json` اضافه کنید، `npm run test:update` را اجرا کنید و فایل مرجع جدید را بررسی کنید.
 
 ## اجزای شخص ثالث
 

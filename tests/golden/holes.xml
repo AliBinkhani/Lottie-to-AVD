@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector android:width="120dp"
+            android:height="60dp"
+            android:viewportWidth="200"
+            android:viewportHeight="100">
+            <group android:name="path_ring_1"
+                android:translateX="160"
+                android:translateY="50">
+                <path android:name="path_3"
+                    android:pathData="M-28,-28 C-28,-28 28,-28 28,-28 C28,-28 28,28 28,28 C28,28 -28,28 -28,28 C-28,28 -28,-28 -28,-28 Z M-12,-12 C-12,-12 -12,12 -12,12 C-12,12 12,12 12,12 C12,12 12,-12 12,-12 C12,-12 -12,-12 -12,-12 Z"
+                    android:fillColor="#1F9E6B" />
+            </group>
+            <group android:name="even_odd_frame_4"
+                android:translateX="100"
+                android:translateY="50">
+                <path android:name="path_6"
+                    android:pathData="M28,-28 L28,28 C28,28 28,28 28,28 L-28,28 C-28,28 -28,28 -28,28 L-28,-28 C-28,-28 -28,-28 -28,-28 L28,-28 C28,-28 28,-28 28,-28 Z M15,-15 L15,15 C15,15 15,15 15,15 L-15,15 C-15,15 -15,15 -15,15 L-15,-15 C-15,-15 -15,-15 -15,-15 L15,-15 C15,-15 15,-15 15,-15 Z"
+                    android:fillColor="#F57345"
+                    android:fillType="evenOdd" />
+            </group>
+            <group android:name="nonzero_ring_7"
+                android:translateX="40"
+                android:translateY="50">
+                <path android:name="path_9"
+                    android:pathData="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-10,0 C-10,5.523 -5.523,10 0,10 C5.523,10 10,5.523 10,0 C10,-5.523 5.523,-10 0,-10 C-5.523,-10 -10,-5.523 -10,0 Z"
+                    android:fillColor="#5C45E8" />
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="path_9">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="pathData"
+                    android:duration="300"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-10,0 C-10,5.523 -5.523,10 0,10 C5.523,10 10,5.523 10,0 C10,-5.523 5.523,-10 0,-10 C-5.523,-10 -10,-5.523 -10,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-10.301,0 C-10.301,5.689 -5.689,10.301 0,10.301 C5.689,10.301 10.301,5.689 10.301,0 C10.301,-5.689 5.689,-10.301 0,-10.301 C-5.689,-10.301 -10.301,-5.689 -10.301,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator android:propertyName="pathData"
+                    android:startOffset="300"
+                    android:duration="233"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-10.301,0 C-10.301,5.689 -5.689,10.301 0,10.301 C5.689,10.301 10.301,5.689 10.301,0 C10.301,-5.689 5.689,-10.301 0,-10.301 C-5.689,-10.301 -10.301,-5.689 -10.301,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-11.138,0 C-11.138,6.152 -6.152,11.138 0,11.138 C6.152,11.138 11.138,6.152 11.138,0 C11.138,-6.152 6.152,-11.138 0,-11.138 C-6.152,-11.138 -11.138,-6.152 -11.138,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator android:propertyName="pathData"
+                    android:startOffset="533"
+                    android:duration="167"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-11.138,0 C-11.138,6.152 -6.152,11.138 0,11.138 C6.152,11.138 11.138,6.152 11.138,0 C11.138,-6.152 6.152,-11.138 0,-11.138 C-6.152,-11.138 -11.138,-6.152 -11.138,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-12.279,0 C-12.279,6.781 -6.781,12.279 0,12.279 C6.781,12.279 12.279,6.781 12.279,0 C12.279,-6.781 6.781,-12.279 0,-12.279 C-6.781,-12.279 -12.279,-6.781 -12.279,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator android:propertyName="pathData"
+                    android:startOffset="700"
+                    android:duration="167"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-12.279,0 C-12.279,6.781 -6.781,12.279 0,12.279 C6.781,12.279 12.279,6.781 12.279,0 C12.279,-6.781 6.781,-12.279 0,-12.279 C-6.781,-12.279 -12.279,-6.781 -12.279,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-14.09,0 C-14.09,7.782 -7.782,14.09 0,14.09 C7.782,14.09 14.09,7.782 14.09,0 C14.09,-7.782 7.782,-14.09 0,-14.09 C-7.782,-14.09 -14.09,-7.782 -14.09,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator android:propertyName="pathData"
+                    android:startOffset="867"
+                    android:duration="300"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-14.09,0 C-14.09,7.782 -7.782,14.09 0,14.09 C7.782,14.09 14.09,7.782 14.09,0 C14.09,-7.782 7.782,-14.09 0,-14.09 C-7.782,-14.09 -14.09,-7.782 -14.09,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-18.332,0 C-18.332,10.124 -10.124,18.332 0,18.332 C10.124,18.332 18.332,10.124 18.332,0 C18.332,-10.124 10.124,-18.332 0,-18.332 C-10.124,-18.332 -18.332,-10.124 -18.332,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator android:propertyName="pathData"
+                    android:startOffset="1167"
+                    android:duration="166"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-18.332,0 C-18.332,10.124 -10.124,18.332 0,18.332 C10.124,18.332 18.332,10.124 18.332,0 C18.332,-10.124 10.124,-18.332 0,-18.332 C-10.124,-18.332 -18.332,-10.124 -18.332,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-19.997,0 C-19.997,11.044 -11.044,19.997 0,19.997 C11.044,19.997 19.997,11.044 19.997,0 C19.997,-11.044 11.044,-19.997 0,-19.997 C-11.044,-19.997 -19.997,-11.044 -19.997,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator android:propertyName="pathData"
+                    android:startOffset="1333"
+                    android:duration="200"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-19.997,0 C-19.997,11.044 -11.044,19.997 0,19.997 C11.044,19.997 19.997,11.044 19.997,0 C19.997,-11.044 11.044,-19.997 0,-19.997 C-11.044,-19.997 -19.997,-11.044 -19.997,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-21.175,0 C-21.175,11.695 -11.695,21.175 0,21.175 C11.695,21.175 21.175,11.695 21.175,0 C21.175,-11.695 11.695,-21.175 0,-21.175 C-11.695,-21.175 -21.175,-11.695 -21.175,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator android:propertyName="pathData"
+                    android:startOffset="1533"
+                    android:duration="267"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-21.175,0 C-21.175,11.695 -11.695,21.175 0,21.175 C11.695,21.175 21.175,11.695 21.175,0 C21.175,-11.695 11.695,-21.175 0,-21.175 C-11.695,-21.175 -21.175,-11.695 -21.175,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-21.875,0 C-21.875,12.081 -12.081,21.875 0,21.875 C12.081,21.875 21.875,12.081 21.875,0 C21.875,-12.081 12.081,-21.875 0,-21.875 C-12.081,-21.875 -21.875,-12.081 -21.875,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+                <objectAnimator android:propertyName="pathData"
+                    android:startOffset="1800"
+                    android:duration="200"
+                    android:valueFrom="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-21.875,0 C-21.875,12.081 -12.081,21.875 0,21.875 C12.081,21.875 21.875,12.081 21.875,0 C21.875,-12.081 12.081,-21.875 0,-21.875 C-12.081,-21.875 -21.875,-12.081 -21.875,0 Z"
+                    android:valueTo="M0,-30 C16.569,-30 30,-16.569 30,0 C30,16.569 16.569,30 0,30 C-16.569,30 -30,16.569 -30,0 C-30,-16.569 -16.569,-30 0,-30 Z M-22,0 C-22,12.15 -12.15,22 0,22 C12.15,22 22,12.15 22,0 C22,-12.15 12.15,-22 0,-22 C-12.15,-22 -22,-12.15 -22,0 Z"
+                    android:valueType="pathType"
+                    android:interpolator="@android:anim/linear_interpolator" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

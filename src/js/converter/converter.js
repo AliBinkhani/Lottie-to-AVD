@@ -13,10 +13,12 @@
  */
 import { fmt, fmtVal, setPrecision, getPrecision } from '../core/format.js';
 import { isAnim, nv, getSegs, segEase, propAt } from '../lottie/properties.js';
-import { shapeToD, geomD } from '../lottie/geometry.js';
+import { shapeToD, geomD, geomShape } from '../lottie/geometry.js';
+import { reverseShape } from '../lottie/transform.js';
 import { gradientAt, isGradientAnimated, hasHighlight, firstGradientColor } from '../lottie/gradient.js';
 import { mapT, unmap, constTrack, numTrack, offsetTrack, prodTrack, colorTrack } from './tracks.js';
 import { writeXml } from './xml-writer.js';
+import { matteClip, maskClips } from './clipping.js';
 
 /** Error with a translatable code. */
 export class ConversionError extends Error {
@@ -87,7 +89,12 @@ export function convert(json, opts = {}) {
 
   /* ---------- scene building ---------- */
 
-  function layerMap(compMap, L) {
+  /**
+   * Time map for the layers *inside* a precomp layer L. A layer's own keyframes
+   * (transform, shapes, masks) are in its composition's time, like lottie-web;
+   * start time (st) and stretch (sr) only shift the precomp's inner timeline.
+   */
+  function innerCompMap(compMap, L) {
     const sr = L.sr || 1, st = L.st || 0;
     return { a: compMap.a * sr, b: compMap.a * st + compMap.b };
   }
@@ -200,12 +207,60 @@ export function convert(json, opts = {}) {
     }
   }
 
+  /**
+   * Path data for several shapes painted by one style, as one path (so the
+   * fill rule can cut holes, like Lottie). A parametric shape drawn
+   * counter-clockwise (d = 3) is reversed so non-zero holes still work.
+   */
+  function combinedGeomTrack(items, map) {
+    const tracks = items.map(item => {
+      if (item.ty === 'sh' || item.d !== 3) return geomTrack(item, map);
+      const props = [item.p, item.s, item.r, item.or, item.ir, item.pt].filter(Boolean);
+      const at = f => shapeToD(reverseShape(geomShape(item, unmap(map, f))));
+      if (!props.some(isAnim)) return constTrack(at(ip), 'pathType');
+      return { type: 'pathType', animated: true, at, exact: () => null };
+    });
+    const join = parts => parts.join(' ');
+    const anim = tracks.filter(t => t.animated);
+    if (!anim.length) return constTrack(join(tracks.map(t => t.at(ip))), 'pathType');
+    return {
+      type: 'pathType',
+      animated: true,
+      at: f => join(tracks.map(t => t.at(f))),
+      exact() {
+        // Exact when a single shape animates: its keyframes, with the others fixed around it.
+        if (anim.length > 1) return null;
+        const ex = anim[0].exact();
+        if (!ex) return null;
+        const fixed = tracks.map(t => (t.animated ? null : t.at(ip)));
+        const withValue = v => join(fixed.map(x => (x == null ? v : x)));
+        return ex.map(sg => Object.assign({}, sg, { v0: withValue(sg.v0), v1: withValue(sg.v1) }));
+      },
+    };
+  }
+
+  /**
+   * Groups the shapes a style paints into paths: shapes that share the same
+   * group chain become one path; shapes with Trim Paths stay separate, since
+   * trims apply to each shape.
+   */
+  function groupGeoms(geoms) {
+    const out = [];
+    for (const g of geoms) {
+      if (g.trims.length) { out.push(g); continue; }
+      const same = out.find(o => !o.trims.length && o.chain.length === g.chain.length && o.chain.every((c, k) => c.tr === g.chain[k].tr));
+      if (same) (same.geoms = same.geoms || [same.geom]).push(g.geom);
+      else out.push(Object.assign({}, g));
+    }
+    return out;
+  }
+
   function emitPath(host, style, g, ctx) {
     let h = host;
     for (const c of g.chain) h = addTransform(h, c.tr, ctx.map, c.nm || 'group');
     const p = node('path', uname(style.nm || g.geom.nm || 'path'));
     h.children.push(p);
-    p.tracks.pathData = geomTrack(g.geom, ctx.map);
+    p.tracks.pathData = g.geoms && g.geoms.length > 1 ? combinedGeomTrack(g.geoms, ctx.map) : geomTrack(g.geom, ctx.map);
     const alpha = prodTrack(ctx.alpha.concat([numTrack(style.o, ctx.map, 0, 'num', v => v / 100, 100)]));
     const isFill = style.ty === 'fl' || style.ty === 'gf';
     const isGradient = style.ty === 'gf' || style.ty === 'gs';
@@ -255,7 +310,7 @@ export function convert(json, opts = {}) {
         const geoms = [];
         collectGeoms(list, i, [], geoms);
         const c2 = Object.assign({}, ctx, { geomCount: geoms.length });
-        for (const g of geoms) emitPath(host, it, g, c2);
+        for (const g of groupGeoms(geoms)) emitPath(host, it, g, c2);
       } else if (it.ty === 'gr') {
         const tr = (it.it || []).find(x => x && x.ty === 'tr');
         const g = addTransform(host, tr, ctx.map, it.nm || 'group');
@@ -269,25 +324,48 @@ export function convert(json, opts = {}) {
     }
   }
 
+  /** Adds clip-path tracks to `host`; each extra clip nests one group deeper. Returns the innermost group. */
+  function addClips(host, tracks, label) {
+    tracks.forEach((track, k) => {
+      if (k > 0) {
+        const g = node('group', uname(label + '_clip'));
+        host.children.push(g);
+        host = g;
+      }
+      const c = node('clip-path', uname(label + '_clip'));
+      c.tracks.pathData = track;
+      host.children.unshift(c);
+      host.clipped = true;
+    });
+    return host;
+  }
+
+  /**
+   * Group for a *parent* layer's transform. Consecutive layers with the same
+   * parent share it (it is reused only while it is still the last thing drawn
+   * in `host`, so the stacking order is unchanged). This avoids repeating the
+   * parent's animators for every child.
+   */
+  function parentGroup(host, layer, map) {
+    const last = host.children[host.children.length - 1];
+    if (last && last.parentOf === layer && last.parentMap === map) return last.inner;
+    const inner = addTransform(host, layer.ks, map, layer.nm || 'layer');
+    const outer = host.children[host.children.length - 1];
+    outer.parentOf = layer;
+    outer.parentMap = map;
+    outer.inner = inner;
+    return inner;
+  }
+
+  /** Size of the "everything" rectangle used for inverted clips. */
+  const clipBound = 10 * Math.max(W, H) + 10000;
+
   function renderComp(layers, ctx, parent) {
     const byInd = new Map();
     layers.forEach(l => { if (l && l.ind != null) byInd.set(l.ind, l); });
-    for (let i = layers.length - 1; i >= 0; i--) {
-      const L = layers[i];
-      if (!L || L.hd || L.td) continue;
-      if (L.tt) warn('matte');
-      if (L.hasMask || (L.masksProperties && L.masksProperties.length)) warn('mask');
-      if (L.ddd) warn('d3');
-      if (L.ef && L.ef.length) warn('effects');
-      if (L.tm) warn('timeremap');
-      const vis = visTrack(L, ctx.map);
-      if (!vis.animated && vis.at(0) === 0) continue;
-      if (L.ty === 3) continue; // null layer
-      if (L.ty === 2) { warn('image'); continue; }
-      if (L.ty === 5) { warn('text'); continue; }
-      if (![0, 1, 4].includes(L.ty)) { warn('unknownLayer'); continue; }
 
-      // Parent chain, outermost first.
+    /** Layer plus its parents, outermost first. */
+    const parentChain = L => {
       const chain = [];
       let cur = L;
       const seen = new Set([L]);
@@ -299,11 +377,75 @@ export function convert(json, opts = {}) {
         seen.add(p);
         cur = p;
       }
-      let host = parent;
-      for (const c of chain) host = addTransform(host, c.ks, layerMap(ctx.map, c), c.nm || 'layer');
+      return chain;
+    };
 
-      const lm = layerMap(ctx.map, L);
-      const alpha = ctx.alpha.concat([numTrack(L.ks && L.ks.o, lm, 0, 'num', v => v / 100, 100), vis]);
+    for (let i = layers.length - 1; i >= 0; i--) {
+      const L = layers[i];
+      if (!L || L.hd || L.td) continue;
+      if (L.ddd) warn('d3');
+      if (L.ef && L.ef.length) warn('effects');
+      if (L.tm) warn('timeremap');
+      const vis = visTrack(L, ctx.map);
+      if (!vis.animated && vis.at(0) === 0) continue;
+      if (L.ty === 3) continue; // null layer
+      if (L.ty === 2) { warn('image'); continue; }
+      if (L.ty === 5) { warn('text'); continue; }
+      if (![0, 1, 4].includes(L.ty)) { warn('unknownLayer'); continue; }
+
+      const chain = parentChain(L);
+      const lm = ctx.map;
+      const alpha = ctx.alpha.concat([numTrack(L.ks && L.ks.o, lm, 0, 'num', v => v / 100, 100)]);
+      // In/out points hide the whole layer: one scaleX 0/1 group instead of
+      // repeating the jumps on every path's alpha (nothing is drawn at scale 0).
+      const shown = [vis];
+      let host = parent;
+      let start = 0;
+
+      // Track matte: clip in the space of the ancestors both layers share.
+      if (L.tt) {
+        const matte = L.tp != null ? byInd.get(L.tp) : layers[i - 1];
+        const inverted = L.tt === 2 || L.tt === 4;
+        if (!matte) {
+          warn('matteUnsupported');
+        } else {
+          const mChain = parentChain(matte);
+          let k = 0;
+          while (k < chain.length - 1 && k < mChain.length - 1 && chain[k] === mChain[k]) k++;
+          const res = matteClip({
+            matte, restChain: mChain.slice(k), mapOf: () => ctx.map, inverted, bound: clipBound,
+          });
+          if (res.unsupported) {
+            warn('matteUnsupported');
+          } else {
+            if (L.tt === 3 || L.tt === 4) warn('matteLuma');
+            if (res.flags.soft) warn('matteSoft');
+            if (res.flags.multitrim) warn('multitrim');
+            for (; start < k; start++) host = parentGroup(host, chain[start], ctx.map);
+            const wrap = node('group', uname((L.nm || 'layer') + '_matte'));
+            host.children.push(wrap);
+            host = addClips(wrap, [res.track], matte.nm || 'matte');
+            // Outside the matte's in/out range an alpha matte hides the layer.
+            if (!inverted) shown.push(visTrack(matte, ctx.map));
+          }
+        }
+      }
+
+      for (; start < chain.length - 1; start++) host = parentGroup(host, chain[start], ctx.map);
+      const showTrack = prodTrack(shown);
+      if (showTrack.animated) {
+        const g = node('group', uname((L.nm || 'layer') + '_visibility'));
+        g.tracks.scaleX = showTrack;
+        host.children.push(g);
+        host = g;
+      }
+      host = addTransform(host, L.ks, ctx.map, L.nm || 'layer');
+
+      // Masks: clip in the layer's own space.
+      if (L.masksProperties && L.masksProperties.length) {
+        host = addClips(host, maskClips(L.masksProperties, lm, { bound: clipBound, warn }), (L.nm || 'layer') + '_mask');
+      }
+
       if (L.ty === 4) {
         renderShapes(L.shapes, host, { map: lm, alpha });
       } else if (L.ty === 1) {
@@ -317,7 +459,7 @@ export function convert(json, opts = {}) {
       } else if (L.ty === 0) {
         const a = assets[L.refId];
         if (a && Array.isArray(a.layers) && (ctx.depth || 0) < 12) {
-          renderComp(a.layers, { map: lm, alpha, depth: (ctx.depth || 0) + 1 }, host);
+          renderComp(a.layers, { map: innerCompMap(ctx.map, L), alpha, depth: (ctx.depth || 0) + 1 }, host);
         }
       }
     }
@@ -325,41 +467,45 @@ export function convert(json, opts = {}) {
 
   renderComp(json.layers, { map: { a: 1, b: 0 }, alpha: [], depth: 0 }, root);
 
-  // Drop empty groups.
+  // Drop groups that draw nothing (a group holding only a clip-path draws nothing).
+  const drawsSomething = n => n.children.some(c => c.tag === 'path' || (c.tag === 'group' && drawsSomething(c)));
   (function prune(n) {
     n.children = n.children.filter(c => {
-      if (c.tag === 'path') return true;
+      if (c.tag === 'path' || c.tag === 'clip-path') return true;
       prune(c);
-      return c.children.length > 0;
+      return drawsSomething(c);
     });
   })(root);
 
   /* ---------- track compilation ---------- */
 
   const eqTol = type => (type === 'colorType' ? 1 / 512 : Math.max(Math.pow(10, -getPrecision()) / 2, 1e-6));
+  // Properties measured in drawing units can be simplified with a tolerance
+  // relative to the drawing size (1/2000 of it, far below a device pixel).
+  const SPATIAL = { translateX: 1, translateY: 1, pivotX: 1, pivotY: 1, pathData: 1, strokeWidth: 1 };
+  const spatialTol = Math.max(W, H) / 2000;
+  const tolFor = (type, prop) => (SPATIAL[prop] ? Math.max(eqTol(type), spatialTol) : eqTol(type));
   let baked = 0;
 
   /** Samples a track and simplifies it into linear segments. */
-  function bake(track) {
+  /** Samples a track and simplifies it into linear segments within `eps`. */
+  function bake(track, eps) {
     const fs = [];
     for (let f = ip; f < op - 1e-9; f += step) fs.push(f);
     fs.push(op);
     const raw = fs.map(f => track.at(f));
 
+    let vec;
     if (track.type === 'pathType') {
+      // Paths interpolate only between identical command structures.
       const sig = s => s.replace(/-?\d*\.?\d+(e[-+]?\d+)?/gi, '#');
-      const segs = [];
       const s0 = sig(raw[0]);
-      for (let i = 0; i < raw.length - 1; i++) {
-        if (raw[i] === raw[i + 1]) continue;
-        if (sig(raw[i + 1]) !== s0) { warn('morph'); return []; }
-        segs.push({ f0: fs[i], f1: fs[i + 1], v0: raw[i], v1: raw[i + 1], ease: null });
-      }
-      return segs;
+      if (raw.some(r => sig(r) !== s0)) { warn('morph'); return []; }
+      vec = raw.map(r => (r.match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi) || []).map(Number));
+    } else {
+      vec = raw.map(v => (Array.isArray(v) ? v : [v]));
     }
 
-    const vec = raw.map(v => (Array.isArray(v) ? v : [v]));
-    const eps = eqTol(track.type);
     const segs = [];
     let s = 0;
     while (s < fs.length - 1) {
@@ -385,7 +531,7 @@ export function convert(json, opts = {}) {
     return segs;
   }
 
-  function trackSegs(track) {
+  function trackSegs(track, prop) {
     if (!track.animated) return [];
     const segs = track.exact();
     if (segs) {
@@ -404,7 +550,7 @@ export function convert(json, opts = {}) {
       if (ok) return out;
     }
     baked++;
-    return bake(track);
+    return bake(track, tolFor(track.type, prop));
   }
 
   function compileNode(n) {
@@ -414,7 +560,7 @@ export function convert(json, opts = {}) {
     for (const k in n.tracks) {
       const t = n.tracks[k];
       n.attrs[k] = fmtVal(t.type, t.at(ip));
-      const segs = trackSegs(t);
+      const segs = trackSegs(t, k);
       if (segs.length) n.anims.push({ prop: k, type: t.type, segs });
     }
     for (const k in DEFAULTS) {
@@ -430,7 +576,9 @@ export function convert(json, opts = {}) {
     for (const c of n.children) {
       if (c.tag === 'group') {
         flatten(c);
-        if (!c.anims.length && Object.keys(c.attrs).length === 0) { out.push(...c.children); continue; }
+        // A clip-path only affects its own group, so clipped groups must stay.
+        const clips = c.children.some(x => x.tag === 'clip-path');
+        if (!clips && !c.anims.length && Object.keys(c.attrs).length === 0) { out.push(...c.children); continue; }
       }
       out.push(c);
     }
